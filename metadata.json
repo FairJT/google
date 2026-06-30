@@ -1,0 +1,6 @@
+{
+  "name": "Aura Salon",
+  "description": "An AI-driven cloud-based platform for Persian beauty salons, featuring a custom Shamsi solar calendar, Toman currency, Farsi language support, semantic booking search, artist evaluation matrix, appointment scheduling, and analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
