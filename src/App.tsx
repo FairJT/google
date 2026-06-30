@@ -1,522 +1,754 @@
 import React, { useState, useEffect } from "react";
-import Header from "./components/Header";
-import AuraBot from "./components/AuraBot";
-import ClientPortal from "./components/ClientPortal";
-import BusinessDashboard from "./components/BusinessDashboard";
-import RoadmapProgress from "./components/RoadmapProgress";
-import LoginModal from "./components/LoginModal";
-import { Booking, AppUser } from "./types";
-import { formatToman, toPersianDigits, jalaliToGregorian, getShamsiWeekdayFromString } from "./utils/shamsi";
-import { Bell, ChevronLeft, X, LogIn, Lock, ShieldCheck, Sparkles, ArrowRight, Star } from "lucide-react";
-import { fetchBookingsFromDb, saveBookingToDb, updateBookingStatusInDb, updateBookingRatingInDb } from "./lib/firebase";
-
-const DEFAULT_BOOKINGS: Booking[] = [
-  {
-    id: "b-default-1",
-    salonId: "sal1",
-    salonName: "خانه زیبایی لجند الیژین، جردن",
-    artistId: "a4",
-    artistName: "یوکی سایتو",
-    serviceId: "s6",
-    serviceName: "مانیکور روسی لوکس الیژین",
-    date: "1405/04/09",
-    time: "10:30",
-    price: 350000,
-    status: "Completed",
-    createdAt: "2026-06-24T09:00:00.000Z"
-  },
-  {
-    id: "b-default-2",
-    salonId: "sal2",
-    salonName: "آتلیه زیبایی لجند، زعفرانیه",
-    artistId: "a1",
-    artistName: "سرنا ونس",
-    serviceId: "s1",
-    serviceName: "بالیاژ عسلی طلایی و براشینگ حرفه‌ای",
-    date: "1405/04/14",
-    time: "14:00",
-    price: 1200000,
-    status: "Confirmed",
-    createdAt: "2026-06-28T15:12:00.000Z"
-  }
-];
-
-export const StarRating = ({ rating, onRate }: { rating?: number; onRate: (r: number) => void }) => {
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
-
-  return (
-    <div className="flex items-center gap-0.5 justify-end" dir="ltr">
-      {[1, 2, 3, 4, 5].map((starValue) => {
-        const isFilled = hoverRating !== null ? starValue <= hoverRating : starValue <= (rating || 0);
-        return (
-          <button
-            key={starValue}
-            type="button"
-            onClick={() => onRate(starValue)}
-            onMouseEnter={() => setHoverRating(starValue)}
-            onMouseLeave={() => setHoverRating(null)}
-            className="focus:outline-none transition-transform duration-150 active:scale-125 cursor-pointer p-0.5"
-            title={`امتیاز ${toPersianDigits(starValue)} از ۵`}
-          >
-            <Star
-              className={`w-4 h-4 transition-colors ${
-                isFilled
-                  ? "fill-amber-400 stroke-amber-400"
-                  : "stroke-slate-300 hover:stroke-amber-400"
-              }`}
-            />
-          </button>
-        );
-      })}
-      {rating ? (
-        <span className="text-[10px] text-amber-600 font-extrabold mr-1 whitespace-nowrap">
-          ({toPersianDigits(rating)} از ۵)
-        </span>
-      ) : (
-        <span className="text-[10px] text-slate-400 font-bold mr-1 whitespace-nowrap">
-          ثبت امتیاز
-        </span>
-      )}
-    </div>
-  );
-};
+import { User, Post, HiringOffer, ClientRequest } from "./types";
+import { seedUsers, seedPosts } from "./data";
+import CommunityFeed from "./components/CommunityFeed";
+import HiringMarketplace from "./components/HiringMarketplace";
+import RequestsInbox from "./components/RequestsInbox";
+import Leaderboard from "./components/Leaderboard";
+import UserProfile from "./components/UserProfile";
+import AuthPage from "./components/AuthPage";
+import AIAssistant from "./components/AIAssistant";
+import { 
+  Sparkles, Users, Award, MessageSquare, Search, Inbox, UserCircle, 
+  Briefcase, Star, Settings, RefreshCw, Bell, LogOut, MapPin, Check, LogIn
+} from "lucide-react";
+import { toPersianDigits } from "./utils/shamsi";
 
 export default function App() {
-  // Global States
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
-    const saved = localStorage.getItem("aura_current_user");
-    return saved ? JSON.parse(saved) : null;
+  // Central State for all users in memory
+  const [allUsers, setAllUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem("legendin_users");
+    return saved ? JSON.parse(saved) : seedUsers;
   });
-  const [currentRole, setCurrentRole] = useState<"client" | "admin" | "artist">(() => {
-    const saved = localStorage.getItem("aura_current_user");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return parsed.role;
+
+  // Real logged-in user state. Loaded from localStorage or defaulted to null
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUserId = localStorage.getItem("legendin_logged_in_user_id");
+    if (savedUserId) {
+      const found = allUsers.find(u => u.id === savedUserId);
+      if (found) return found;
     }
-    return "client";
+    return null; // Prompt login by default if no session is active
   });
-  
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [loginModalInitialRole, setLoginModalInitialRole] = useState<"client" | "admin" | "artist">("client");
 
-  const [activeTab, setActiveTab] = useState<string>("booking");
-  const [bookings, setBookings] = useState<Booking[]>(DEFAULT_BOOKINGS);
+  // Guest & Auth Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authActionWarning, setAuthActionWarning] = useState<string | null>(null);
 
-  // Sync / Load bookings from Firebase Firestore with fallback to local storage
+  const guestUser: User = {
+    id: "guest",
+    name: "کاربر مهمان",
+    role: "client",
+    phone: "",
+    email: "guest@legendin.ir",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop",
+    coverImage: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=800&auto=format&fit=crop",
+    title: "مهمان لجندین",
+    city: "تهران",
+    bio: "در حال بررسی بازار کار زیبایی لجندین...",
+    skills: [],
+    certifications: [],
+    portfolio: [],
+    reviews: [],
+    openForHiring: false,
+    acceptingRequests: false
+  };
+
+  const isGuest = currentUser === null;
+  const effectiveUser = currentUser || guestUser;
+
+  const GuestViewPlaceholder = ({ title, description, icon: Icon }: { title: string, description: string, icon: any }) => (
+    <div className="bg-white border border-slate-200/85 rounded-2xl p-8 md:p-12 text-center max-w-xl mx-auto my-8 space-y-6 shadow-xs animate-fade-in">
+      <div className="w-16 h-16 rounded-full bg-[#6B7A4F]/10 text-[#6B7A4F] flex items-center justify-center mx-auto shadow-inner">
+        <Icon className="w-8 h-8" />
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-sm font-black text-slate-800">{title}</h3>
+        <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto font-bold">{description}</p>
+      </div>
+      <button
+        onClick={() => {
+          setAuthActionWarning(`برای استفاده از این بخش ابتدا باید وارد حساب خود شوید.`);
+          setIsAuthModalOpen(true);
+        }}
+        className="bg-[#6B7A4F] hover:bg-[#57643F] text-white font-black px-6 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 mx-auto"
+      >
+        <LogIn className="w-4 h-4" />
+        ورود یا عضویت سریع
+      </button>
+    </div>
+  );
+
+  // Track the user whose profile is currently being inspected in the profile tab
+  const [profileUser, setProfileUser] = useState<User>(() => {
+    const savedUserId = localStorage.getItem("legendin_logged_in_user_id");
+    if (savedUserId) {
+      const found = allUsers.find(u => u.id === savedUserId);
+      if (found) return found;
+    }
+    return allUsers.find(u => u.role === "manager") || allUsers[0];
+  });
+
+  // Navigation tab
+  const [activeTab, setActiveTab] = useState<"feed" | "hiring" | "leaderboard" | "inbox" | "profile" | "assistant">("feed");
+
+  // In-memory posts state
+  const [posts, setPosts] = useState<Post[]>(() => {
+    const saved = localStorage.getItem("legendin_posts");
+    return saved ? JSON.parse(saved) : seedPosts;
+  });
+
+  // In-memory hiring offers (Manager -> Artist)
+  const [hiringOffers, setHiringOffers] = useState<HiringOffer[]>(() => {
+    const saved = localStorage.getItem("legendin_offers");
+    return saved ? JSON.parse(saved) : [
+      {
+        id: "offer-default-1",
+        managerId: "m1",
+        managerName: "مریم رادمنش",
+        salonName: "خانه زیبایی لجند",
+        artistId: "a3",
+        artistName: "غزل نیکو",
+        message: "سلام غزل عزیز، کارهای دیزاین ناخن شما واقعاً بی نظیره. تمایل دارید به صورت پاره‌وقت با لاین جدید زعفرانیه ما همکاری کنید؟",
+        offerAmount: "۱۰ میلیون تومان ثابت + ۴۰٪ درصد پورسانت مراجعین",
+        status: "pending",
+        createdAt: "1405/04/08"
+      }
+    ];
+  });
+
+  // In-memory client requests (Client -> Artist/Salon)
+  const [clientRequests, setClientRequests] = useState<ClientRequest[]>(() => {
+    const saved = localStorage.getItem("legendin_client_requests");
+    return saved ? JSON.parse(saved) : [
+      {
+        id: "req-default-1",
+        clientId: "c1",
+        clientName: "الناز افشار",
+        clientPhone: "۰۹۱۲۰۰۰۰۰۰۳",
+        targetId: "a1",
+        targetName: "سرنا ونس (موسوی)",
+        targetType: "artist",
+        serviceType: "بالیاژ روسی طلایی",
+        preferredDate: "1405/04/14",
+        preferredTime: "11:30",
+        note: "موهام تا شونه‌مه و دکلره پایه ۹ داره، برای احیا و رنگساژ جدید مزاحمتون میشم.",
+        status: "pending",
+        createdAt: "1405/04/09"
+      }
+    ];
+  });
+
+  // PERSIST STATE TO LOCALSTORAGE
   useEffect(() => {
-    async function syncBookings() {
-      try {
-        const dbBookings = await fetchBookingsFromDb();
-        if (dbBookings && dbBookings.length > 0) {
-          const mapped: Booking[] = dbBookings.map(b => ({
-            id: b.id || Math.random().toString(),
-            salonId: b.salonId,
-            salonName: b.salonName,
-            artistId: b.artistId,
-            artistName: b.artistName,
-            serviceId: b.serviceId,
-            serviceName: b.serviceName,
-            date: b.date,
-            time: b.time,
-            price: b.price,
-            status: b.status,
-            createdAt: b.createdAt,
-            rating: b.rating
-          }));
-          setBookings(mapped);
-          localStorage.setItem("aura_bookings", JSON.stringify(mapped));
-        } else {
-          // No bookings in Firestore yet. Seed default bookings into Firestore.
-          const saved = localStorage.getItem("aura_bookings");
-          const localBookings = saved ? JSON.parse(saved) : DEFAULT_BOOKINGS;
-          setBookings(localBookings);
+    localStorage.setItem("legendin_users", JSON.stringify(allUsers));
+  }, [allUsers]);
 
-          // Seed
-          for (const b of localBookings) {
-            await saveBookingToDb({
-              salonId: b.salonId,
-              salonName: b.salonName,
-              serviceId: b.serviceId,
-              serviceName: b.serviceName,
-              price: b.price,
-              duration: 45,
-              artistId: b.artistId,
-              artistName: b.artistName,
-              date: b.date,
-              time: b.time,
-              status: b.status,
-              userName: currentUser?.name || "کاربر تستی",
-              userPhone: currentUser?.phone || "09121234567",
-              createdAt: b.createdAt || new Date().toISOString(),
-              rating: b.rating
-            });
-          }
+  useEffect(() => {
+    localStorage.setItem("legendin_posts", JSON.stringify(posts));
+  }, [posts]);
 
-          // Fetch again to get clean IDs
-          const seeded = await fetchBookingsFromDb();
-          const mappedSeeded: Booking[] = seeded.map(b => ({
-            id: b.id || Math.random().toString(),
-            salonId: b.salonId,
-            salonName: b.salonName,
-            artistId: b.artistId,
-            artistName: b.artistName,
-            serviceId: b.serviceId,
-            serviceName: b.serviceName,
-            date: b.date,
-            time: b.time,
-            price: b.price,
-            status: b.status,
-            createdAt: b.createdAt,
-            rating: b.rating
-          }));
-          setBookings(mappedSeeded);
-          localStorage.setItem("aura_bookings", JSON.stringify(mappedSeeded));
-        }
-      } catch (err) {
-        console.error("Failed to connect or fetch from Firestore, utilizing offline state:", err);
-        const saved = localStorage.getItem("aura_bookings");
-        if (saved) {
-          try {
-            setBookings(JSON.parse(saved));
-          } catch (e) {
-            console.error("Local storage fallback parse error:", e);
-          }
-        }
+  useEffect(() => {
+    localStorage.setItem("legendin_offers", JSON.stringify(hiringOffers));
+  }, [hiringOffers]);
+
+  useEffect(() => {
+    localStorage.setItem("legendin_client_requests", JSON.stringify(clientRequests));
+  }, [clientRequests]);
+
+  // Synchronize when the currentUser gets edited (e.g. updating profile details)
+  const handleUpdateCurrentUser = (updatedUser: User) => {
+    setCurrentUser(updatedUser);
+    setProfileUser(updatedUser);
+    const updatedUsersList = allUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
+    setAllUsers(updatedUsersList);
+  };
+
+  const handleUpdateUsersList = (updatedList: User[]) => {
+    setAllUsers(updatedList);
+    if (currentUser) {
+      const freshCurrentUser = updatedList.find(u => u.id === currentUser.id);
+      if (freshCurrentUser) {
+        setCurrentUser(freshCurrentUser);
       }
     }
-    syncBookings();
-  }, []);
+    const freshProfileUser = updatedList.find(u => u.id === profileUser.id);
+    if (freshProfileUser) {
+      setProfileUser(freshProfileUser);
+    }
+  };
 
-  const handleLoginSuccess = (user: AppUser) => {
+  // Helper to count pending inbox messages for badge notifications
+  const getPendingInboxCount = () => {
+    if (!currentUser) return 0;
+    if (currentUser.role === "manager") {
+      return clientRequests.filter(
+        r => r.targetType === "salon" && r.status === "pending"
+      ).length;
+    } else if (currentUser.role === "artist") {
+      const incomingOffers = hiringOffers.filter(o => o.artistId === currentUser.id && o.status === "pending").length;
+      const incomingRequests = clientRequests.filter(r => r.targetId === currentUser.id && r.targetType === "artist" && r.status === "pending").length;
+      return incomingOffers + incomingRequests;
+    } else {
+      // Clients don't have incoming pending, but we can show their total requests
+      return clientRequests.filter(r => r.clientId === currentUser.id).length;
+    }
+  };
+
+  const pendingCount = getPendingInboxCount();
+
+  // LOGIN & REGISTER HANDLERS
+  const handleLoginSuccess = (user: User) => {
+    localStorage.setItem("legendin_logged_in_user_id", user.id);
     setCurrentUser(user);
-    setCurrentRole(user.role);
-    localStorage.setItem("aura_current_user", JSON.stringify(user));
+    setProfileUser(user);
+    setActiveTab("feed"); // Go to community feed after login
+  };
+
+  const handleRegisterSuccess = (updatedUsersList: User[], loggedInUser: User) => {
+    setAllUsers(updatedUsersList);
+    localStorage.setItem("legendin_logged_in_user_id", loggedInUser.id);
+    setCurrentUser(loggedInUser);
+    setProfileUser(loggedInUser);
+    setActiveTab("feed");
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
-    setCurrentRole("client");
-    setActiveTab("booking");
-    localStorage.removeItem("aura_current_user");
-  };
-
-  const handleOpenLogin = (role: "client" | "admin" | "artist" = "client") => {
-    setLoginModalInitialRole(role);
-    setLoginModalOpen(true);
-  };
-
-  const handleAddBooking = async (newBooking: Booking) => {
-    try {
-      const docId = await saveBookingToDb({
-        salonId: newBooking.salonId,
-        salonName: newBooking.salonName,
-        serviceId: newBooking.serviceId,
-        serviceName: newBooking.serviceName,
-        price: newBooking.price,
-        duration: 45,
-        artistId: newBooking.artistId,
-        artistName: newBooking.artistName,
-        date: newBooking.date,
-        time: newBooking.time,
-        status: newBooking.status,
-        userName: currentUser?.name || "مشتری مهمان",
-        userPhone: currentUser?.phone || "09121234567",
-        createdAt: new Date().toISOString()
-      });
-      const withId = { ...newBooking, id: docId };
-      setBookings((prev) => {
-        const updated = [withId, ...prev];
-        localStorage.setItem("aura_bookings", JSON.stringify(updated));
-        return updated;
-      });
-    } catch (err) {
-      console.error("Failed to save booking to Firestore, saving locally:", err);
-      setBookings((prev) => {
-        const updated = [newBooking, ...prev];
-        localStorage.setItem("aura_bookings", JSON.stringify(updated));
-        return updated;
-      });
+    if (confirm("آیا برای خروج از حساب کاربری اطمینان دارید؟")) {
+      localStorage.removeItem("legendin_logged_in_user_id");
+      setCurrentUser(null);
     }
   };
 
-  const handleCancelBooking = async (id: string) => {
-    try {
-      await updateBookingStatusInDb(id, "Cancelled");
-    } catch (err) {
-      console.error("Failed to cancel booking in Firestore:", err);
-    }
-
-    setBookings((prev) => {
-      const updated = prev.map(b => b.id === id ? { ...b, status: "Cancelled" as const } : b);
-      localStorage.setItem("aura_bookings", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const handleRateBooking = async (id: string, rating: number) => {
-    try {
-      await updateBookingRatingInDb(id, rating);
-    } catch (err) {
-      console.error("Failed to update booking rating in Firestore:", err);
-    }
-
-    setBookings((prev) => {
-      const updated = prev.map(b => b.id === id ? { ...b, rating } : b);
-      localStorage.setItem("aura_bookings", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const handleUpdateBookingStatus = async (id: string, status: "Confirmed" | "Completed" | "Cancelled") => {
-    try {
-      await updateBookingStatusInDb(id, status);
-    } catch (err) {
-      console.error(`Failed to update booking status to ${status} in Firestore:`, err);
-    }
-
-    setBookings((prev) => {
-      const updated = prev.map(b => b.id === id ? { ...b, status } : b);
-      localStorage.setItem("aura_bookings", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  // Find the nearest upcoming confirmed booking
-  const [isAlertDismissed, setIsAlertDismissed] = useState<boolean>(false);
-
-  const getDaysDifference = (shamsiDateStr: string): number => {
-    try {
-      const parts = shamsiDateStr.split("/");
-      if (parts.length !== 3) return -1;
-      const jy = parseInt(parts[0]);
-      const jm = parseInt(parts[1]);
-      const jd = parseInt(parts[2]);
-      const [gy, gm, gd] = jalaliToGregorian(jy, jm, jd);
-      
-      const bookingDate = new Date(gy, gm - 1, gd);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      bookingDate.setHours(0, 0, 0, 0);
-      
-      const diffTime = bookingDate.getTime() - today.getTime();
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    } catch (e) {
-      return -1;
+  // RESET ALL SIMULATION DATA TO ORIGINAL SEED STATES
+  const handleResetData = () => {
+    if (confirm("آیا تمایل دارید تمام وضعیت‌های برنامه را به حالت اولیه بازگردانید؟ (این کار اطلاعات محلی شما را پاک می‌کند)")) {
+      localStorage.removeItem("legendin_users");
+      localStorage.removeItem("legendin_logged_in_user_id");
+      localStorage.removeItem("legendin_posts");
+      localStorage.removeItem("legendin_offers");
+      localStorage.removeItem("legendin_client_requests");
+      window.location.reload();
     }
   };
 
-  const getCountdownText = (daysDiff: number): string => {
-    if (daysDiff === 0) return "امروز";
-    if (daysDiff === 1) return "فردا";
-    if (daysDiff === 2) return "پس‌فردا";
-    return `${toPersianDigits(daysDiff)} روز دیگر`;
-  };
-
-  const upcomingBookings = bookings
-    .filter(b => b.status === "Confirmed")
-    .map(b => ({
-      ...b,
-      daysDiff: getDaysDifference(b.date)
-    }))
-    .filter(b => b.daysDiff >= 0)
-    .sort((a, b) => {
-      if (a.daysDiff !== b.daysDiff) return a.daysDiff - b.daysDiff;
-      return a.time.localeCompare(b.time);
-    });
-
-  const nearestBooking = upcomingBookings[0] || null;
-
-  useEffect(() => {
-    setIsAlertDismissed(false);
-  }, [nearestBooking?.id]);
-
+  // 1. HEADER & GUEST REDIRECTS FOR GUEST USER STATE - RENDER RESPONSIVE INTERFACE DIRECTLY
   return (
-    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex flex-col font-sans selection:bg-indigo-100 selection:text-slate-900" dir="rtl">
+    <div className="min-h-screen bg-[#F7F5F0] flex flex-col font-sans selection:bg-[#6B7A4F]/25 text-slate-800 antialiased text-right" dir="rtl">
       
-      {/* Top Header Navigation */}
-      <Header 
-        currentUser={currentUser}
-        onOpenLogin={handleOpenLogin}
-        onLogout={handleLogout}
-        activeTab={activeTab} 
-        onChangeTab={setActiveTab} 
-      />
-
-      {/* Elegant Upcoming Appointment Notification Banner */}
-      {nearestBooking && !isAlertDismissed && (
-        <div className="bg-gradient-to-r from-indigo-950 via-indigo-900 to-slate-900 text-white border-b border-indigo-800 relative z-30 animate-in slide-in-from-top duration-300">
-          <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-right">
-            <div className="flex items-start md:items-center gap-3">
-              <div className="p-2 bg-indigo-800/80 rounded-xl border border-indigo-700/50 shrink-0">
-                <Bell className="w-4 h-4 text-indigo-300 animate-bounce" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                  <span className="bg-rose-500 text-white font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                    {getCountdownText(nearestBooking.daysDiff)}
-                  </span>
-                  <span className="font-bold text-indigo-200">نزدیک‌ترین نوبت رزرو شده شما:</span>
-                  <span className="font-extrabold text-white text-sm">{nearestBooking.serviceName}</span>
-                </div>
-                <p className="text-[11px] text-indigo-200 font-medium leading-relaxed">
-                  توسط متخصص گرامی <span className="text-white font-bold">{nearestBooking.artistName}</span> در <span className="text-white font-bold">{nearestBooking.salonName}</span> • {getShamsiWeekdayFromString(nearestBooking.date)} {toPersianDigits(nearestBooking.date)} ساعت <span className="font-mono text-white font-bold text-xs bg-indigo-950/60 px-1.5 py-0.5 rounded">{toPersianDigits(nearestBooking.time)}</span>
-                </p>
-              </div>
+      {/* ========================================================= */}
+      {/* RESPONSIVE HEADER (Unified Desktop & Mobile Header) */}
+      {/* ========================================================= */}
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3.5 shadow-xs">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* Right section: Branding & Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#6B7A4F] flex items-center justify-center shadow-md">
+              <Users className="w-5 h-5 text-white" />
             </div>
+            <div>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                لجندین <span className="text-[#6B7A4F] text-[9.5px] bg-[#6B7A4F]/10 px-2 py-0.5 rounded-md font-extrabold">شبکه بازار کار زیبایی</span>
+              </h1>
+              <p className="text-[9px] text-slate-400 font-bold hidden sm:block mt-0.5">بزرگترین مجتمع فوق‌تخصصی اشتراک رزومه و استخدام آرتیست‌های زیبایی</p>
+            </div>
+          </div>
+
+          {/* Left section: Logged-in User Profile / Guest login & Log out */}
+          <div className="flex items-center gap-3">
             
-            <div className="flex items-center gap-3 self-end md:self-auto shrink-0">
+            {/* Quick Reset Data Button (Helper for reviewers) */}
+            <button
+              onClick={handleResetData}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all cursor-pointer text-xs flex items-center gap-1"
+              title="پاکسازی و بازنشانی به داده‌های اولیه"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden md:inline text-[9px] font-bold">بازنشانی دیتابیس</span>
+            </button>
+
+            {isGuest ? (
               <button
                 onClick={() => {
-                  setActiveTab("booking");
-                  setTimeout(() => {
-                    document.getElementById("user-bookings-section")?.scrollIntoView({ behavior: "smooth" });
-                  }, 100);
+                  setAuthActionWarning(null);
+                  setIsAuthModalOpen(true);
                 }}
-                className="bg-white hover:bg-indigo-50 text-indigo-950 text-[10px] font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer border border-indigo-200"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#6B7A4F] hover:bg-[#57643F] text-white text-xs font-black shadow-md transition-all cursor-pointer active:scale-95"
               >
-                <span>مشاهده جزئیات نوبت</span>
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <LogIn className="w-4 h-4" />
+                <span>ورود / عضویت</span>
               </button>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/60 rounded-xl p-1 px-2.5">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    onClick={() => {
+                      setProfileUser(currentUser);
+                      setActiveTab("profile");
+                    }}
+                    className="w-7 h-7 rounded-full object-cover border border-slate-200 cursor-pointer active:scale-95 transition-transform"
+                  />
+                  <div className="text-right hidden sm:block">
+                    <h4 className="text-[10.5px] font-black text-slate-800 leading-tight">{currentUser.name}</h4>
+                    <p className="text-[8.5px] text-[#6B7A4F] font-bold">
+                      {currentUser.role === "manager" ? "مدیر سالن" : currentUser.role === "artist" ? "آرتیست زیبایی" : "مشتری عادی"}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-150 bg-rose-50/50 hover:bg-rose-550/10 hover:border-rose-300 text-rose-700 text-[10.5px] font-black transition-all cursor-pointer active:scale-95"
+                  title="خروج از حساب کاربری"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">خروج</span>
+                </button>
+              </>
+            )}
+          </div>
+
+        </div>
+      </header>
+
+      {/* ========================================================= */}
+      {/* DESKTOP NAVIGATION BAR (Hidden on Mobile) */}
+      {/* ========================================================= */}
+      <nav className="hidden lg:block bg-white border-b border-slate-200 py-1 shadow-2xs">
+        <div className="max-w-4xl mx-auto flex items-center justify-center gap-1 px-4">
+          <button
+            onClick={() => setActiveTab("feed")}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "feed"
+                ? "bg-[#6B7A4F]/10 text-[#6B7A4F]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            خوراک انجمن (Home)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("hiring")}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "hiring"
+                ? "bg-[#6B7A4F]/10 text-[#6B7A4F]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            <Search className="w-4 h-4" />
+            دایرکتوری استخدام آرتیست‌ها
+          </button>
+
+          <button
+            onClick={() => setActiveTab("leaderboard")}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "leaderboard"
+                ? "bg-[#6B7A4F]/10 text-[#6B7A4F]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            <Award className="w-4 h-4" />
+            برترین‌های هفته
+          </button>
+
+          <button
+            onClick={() => setActiveTab("assistant")}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "assistant"
+                ? "bg-[#6B7A4F]/10 text-[#6B7A4F]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#6B7A4F]" />
+            دستیار هوشمند لجندین
+          </button>
+
+          <button
+            onClick={() => setActiveTab("inbox")}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap relative cursor-pointer ${
+              activeTab === "inbox"
+                ? "bg-[#6B7A4F]/10 text-[#6B7A4F]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            <Inbox className="w-4 h-4" />
+            صندوق درخواست‌ها
+            {pendingCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8.5px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-bold">
+                {toPersianDigits(pendingCount)}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => {
+              if (isGuest) {
+                setProfileUser(guestUser);
+                setActiveTab("profile");
+              } else {
+                setProfileUser(currentUser!);
+                setActiveTab("profile");
+              }
+            }}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "profile" && profileUser.id === effectiveUser.id
+                ? "bg-[#6B7A4F]/10 text-[#6B7A4F]"
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+            }`}
+          >
+            <UserCircle className="w-4 h-4" />
+            رزومه و پروفایل من
+          </button>
+        </div>
+      </nav>
+
+      {/* ========================================================= */}
+      {/* MAIN LAYOUT WRAPPER */}
+      {/* ========================================================= */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 pt-6 pb-24 lg:pb-12">
+        <div className="grid lg:grid-cols-4 gap-6">
+          
+          {/* SIDEBAR: Personal Card info (Desktop Only) */}
+          <aside className="lg:col-span-1 space-y-5 text-right hidden lg:block">
+            
+            {isGuest ? (
+              <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-xs text-center space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-[#6B7A4F]/10 flex items-center justify-center mx-auto text-[#6B7A4F]">
+                  <Sparkles className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xs font-black text-slate-800">خوش آمدید به لجندین</h3>
+                  <p className="text-[9.5px] text-[#6B7A4F] font-extrabold leading-normal">شبکه اشتراک رزومه و استخدام آرتیست‌های زیبایی</p>
+                </div>
+                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">برای ثبت پیشنهادهای کاریابی، ثبت نوبت و انتشار رزومه شخصی به ما بپیوندید.</p>
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="w-full py-2.5 rounded-xl bg-[#6B7A4F] hover:bg-[#57643F] text-white text-[11px] font-black shadow-md transition-all cursor-pointer active:scale-95"
+                >
+                  ورود / عضویت سریع
+                </button>
+              </div>
+            ) : (
+              /* Short Profile Widget */
+              <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
+                <div className="h-16 bg-[#6B7A4F]/20 relative">
+                  {currentUser && currentUser.coverImage && (
+                    <img src={currentUser.coverImage} alt="Cover" className="w-full h-full object-cover opacity-30" />
+                  )}
+                </div>
+                
+                <div className="p-4 relative flex flex-col items-center text-center">
+                  <img
+                    src={currentUser?.avatar}
+                    alt={currentUser?.name}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm -mt-10 mb-2.5 cursor-pointer hover:opacity-90"
+                    onClick={() => {
+                      if (currentUser) {
+                        setProfileUser(currentUser);
+                        setActiveTab("profile");
+                      }
+                    }}
+                  />
+                  
+                  <h3 className="text-sm font-black text-slate-900 hover:text-[#6B7A4F] cursor-pointer" onClick={() => {
+                    if (currentUser) {
+                      setProfileUser(currentUser);
+                      setActiveTab("profile");
+                    }
+                  }}>{currentUser?.name}</h3>
+                  <p className="text-[9.5px] text-slate-400 font-bold mt-0.5">{currentUser?.title}</p>
+                  <p className="text-[10px] text-slate-500 mt-1 flex items-center justify-center gap-1 font-bold">
+                    <MapPin className="w-3 h-3 text-[#6B7A4F]" />
+                    {currentUser?.city}
+                  </p>
+
+                  <div className="w-full border-t border-slate-100 mt-4 pt-3.5 space-y-2 text-right text-xs">
+                    <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                      <span>درخواست‌های معلق:</span>
+                      <span className="text-[#6B7A4F]">{toPersianDigits(pendingCount)} مورد</span>
+                    </div>
+                    
+                    {currentUser && currentUser.role === "artist" && currentUser.rating && (
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                        <span>امتیاز رضایت مشتری:</span>
+                        <span className="text-amber-600 flex items-center gap-0.5 font-bold">
+                          <Star className="w-3 h-3 fill-amber-400 stroke-amber-400" />
+                          {toPersianDigits(currentUser.rating)} از ۵
+                        </span>
+                      </div>
+                    )}
+
+                    {currentUser && currentUser.role === "manager" && currentUser.salonName && (
+                      <div className="bg-slate-50 rounded-lg p-2 mt-2 border border-slate-100">
+                        <p className="text-[8.5px] text-[#6B7A4F] font-black">مدیر فنی مجموعه:</p>
+                        <p className="text-[9.5px] text-slate-700 font-bold truncate mt-0.5">{currentUser.salonName}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* AI Assistant Promo Sidebar Card */}
+            <div className="bg-gradient-to-br from-emerald-500/5 via-white to-slate-50/50 border border-[#6B7A4F]/20 rounded-2xl p-4.5 shadow-xs text-right space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 bg-[#6B7A4F]/10 rounded-lg text-[#6B7A4F]">
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                </span>
+                <span className="text-[10.5px] font-black text-[#57643F]">دستیار هوشمند لجندین</span>
+              </div>
+              <p className="text-[9.5px] text-slate-500 leading-relaxed font-semibold">
+                {currentUser?.role === "manager" 
+                  ? "تحلیل خودکار نوبت‌ها، لود کاری آرتیست‌ها و برآورد زنده سود مالی کل سالن!"
+                  : "به دنبال مدل خاص ناخن زیر ۲ میلیون تومان هستید؟ بهترین آرتیست‌ها و ترندها را بیابید!"}
+              </p>
               <button
-                onClick={() => setIsAlertDismissed(true)}
-                className="p-2 hover:bg-white/10 rounded-xl text-indigo-300 hover:text-white transition-colors cursor-pointer"
-                title="بستن هشدار"
+                onClick={() => setActiveTab("assistant")}
+                className="w-full py-2 bg-[#6B7A4F] hover:bg-[#57643F] text-white text-[9.5px] font-black rounded-lg transition-all active:scale-95 cursor-pointer shadow-3xs"
               >
-                <X className="w-4.5 h-4.5" />
+                شروع گفتگو با مشاور AI ⚡
               </button>
             </div>
+
+            {/* Quick Community Stats Widget */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs space-y-3.5">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">جامعه آماری بازار کار</h4>
+              
+              <div className="space-y-2.5 text-xs text-slate-600 font-bold">
+                <div className="flex justify-between">
+                  <span>آرتیست‌های عضو:</span>
+                  <span className="text-slate-900">{toPersianDigits(allUsers.filter(u => u.role === "artist").length)} نفر</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>مدیران سالن‌ها:</span>
+                  <span className="text-slate-900">{toPersianDigits(allUsers.filter(u => u.role === "manager").length)} نفر</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>کل پست‌های انجمن:</span>
+                  <span className="text-slate-900">{toPersianDigits(posts.length)} پست</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* MAIN TAB CONTENT AREA */}
+          <section className="lg:col-span-3 space-y-6">
+            {activeTab === "feed" && (
+              <CommunityFeed
+                currentUser={effectiveUser}
+                posts={posts}
+                onUpdatePosts={setPosts}
+                allUsers={allUsers}
+              />
+            )}
+
+            {activeTab === "hiring" && (
+              <HiringMarketplace
+                currentUser={effectiveUser}
+                allUsers={allUsers}
+                onUpdateUsers={handleUpdateUsersList}
+                hiringOffers={hiringOffers}
+                onAddHiringOffer={(newOffer) => setHiringOffers([newOffer, ...hiringOffers])}
+                clientRequests={clientRequests}
+                onAddClientRequest={(newReq) => setClientRequests([newReq, ...clientRequests])}
+              />
+            )}
+
+            {activeTab === "leaderboard" && (
+              <Leaderboard
+                allUsers={allUsers}
+                onSelectArtist={(artist) => {
+                  setProfileUser(artist);
+                  setActiveTab("profile");
+                }}
+                onChangeTab={(tab) => setActiveTab(tab as any)}
+              />
+            )}
+
+            {activeTab === "assistant" && (
+              <AIAssistant
+                currentUser={effectiveUser}
+                allUsers={allUsers}
+                clientRequests={clientRequests}
+              />
+            )}
+
+            {activeTab === "inbox" && (
+              isGuest ? (
+                <GuestViewPlaceholder 
+                  title="صندوق درخواست‌ها و پیام‌ها" 
+                  description="برای ارسال پیام، مدیریت درخواست‌های نوبت‌دهی سالن و پیشنهادهای کاریابی، لطفاً ابتدا وارد حساب کاربری خود شوید."
+                  icon={Inbox}
+                />
+              ) : (
+                <RequestsInbox
+                  currentUser={effectiveUser}
+                  hiringOffers={hiringOffers}
+                  onUpdateHiringOffers={setHiringOffers}
+                  clientRequests={clientRequests}
+                  onUpdateClientRequests={setClientRequests}
+                />
+              )
+            )}
+
+            {activeTab === "profile" && (
+              (isGuest && profileUser.id === "guest") ? (
+                <GuestViewPlaceholder 
+                  title="رزومه و پروفایل من" 
+                  description="جهت ایجاد رزومه حرفه‌ای، ثبت مهارت‌ها، درج گواهی‌نامه‌ها و دریافت پیشنهادات استخدامی ابتدا باید حساب کاربری بسازید."
+                  icon={UserCircle}
+                />
+              ) : (
+                <UserProfile
+                  currentUser={effectiveUser}
+                  profileUser={profileUser}
+                  onUpdateCurrentUser={handleUpdateCurrentUser}
+                  onUpdateUsersList={handleUpdateUsersList}
+                  allUsers={allUsers}
+                  posts={posts}
+                  onUpdatePosts={setPosts}
+                />
+              )
+            )}
+          </section>
+
+        </div>
+      </main>
+
+      {/* ========================================================= */}
+      {/* MOBILE BOTTOM NAVIGATION TAB BAR (Visible only on Mobile) */}
+      {/* ========================================================= */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => setActiveTab("feed")}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === "feed" ? "text-[#6B7A4F] font-black scale-105" : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[8px] font-black">خوراک</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("hiring")}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === "hiring" ? "text-[#6B7A4F] font-black scale-105" : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-[8px] font-black">استخدام</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("leaderboard")}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === "leaderboard" ? "text-[#6B7A4F] font-black scale-105" : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          <Award className="w-5 h-5" />
+          <span className="text-[8px] font-black">برترین‌ها</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("assistant")}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === "assistant" ? "text-[#6B7A4F] font-black scale-105" : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          <Sparkles className="w-5 h-5 text-[#6B7A4F]" />
+          <span className="text-[8px] font-black">دستیار</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("inbox")}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all relative cursor-pointer ${
+            activeTab === "inbox" ? "text-[#6B7A4F] font-black scale-105" : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          <Inbox className="w-5 h-5" />
+          <span className="text-[8px] font-black">صندوق</span>
+          {pendingCount > 0 && (
+            <span className="absolute top-0.5 right-2 bg-rose-500 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+              {toPersianDigits(pendingCount)}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => {
+            if (isGuest) {
+              setProfileUser(guestUser);
+              setActiveTab("profile");
+            } else {
+              setProfileUser(currentUser!);
+              setActiveTab("profile");
+            }
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === "profile" && profileUser.id === effectiveUser.id ? "text-[#6B7A4F] font-black scale-105" : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          <UserCircle className="w-5 h-5" />
+          <span className="text-[8px] font-black">پروفایل من</span>
+        </button>
+      </nav>
+
+      {/* ========================================================= */}
+      {/* BEAUTIFUL AUTHENTICATION MODAL (Popup AuthPage) */}
+      {/* ========================================================= */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-xs animate-fade-in text-right" dir="rtl">
+          <div className="relative bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-100 max-h-[92vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="space-y-0.5 text-right">
+                <h3 className="text-xs font-black text-slate-800">ورود و عضویت در لجندین</h3>
+                {authActionWarning ? (
+                  <p className="text-[10px] text-amber-600 font-extrabold flex items-center gap-1 mt-1 justify-end">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    {authActionWarning}
+                  </p>
+                ) : (
+                  <p className="text-[10.5px] text-slate-400 font-bold mt-1">برای دسترسی به تمام امکانات وارد حساب خود شوید.</p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setIsAuthModalOpen(false);
+                  setAuthActionWarning(null);
+                }}
+                className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-all cursor-pointer text-sm font-black"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body / Auth Scrollable area */}
+            <div className="flex-1 overflow-y-auto p-2">
+              <AuthPage 
+                allUsers={allUsers}
+                onLoginSuccess={(user) => {
+                  handleLoginSuccess(user);
+                  setIsAuthModalOpen(false);
+                  setAuthActionWarning(null);
+                }}
+                onRegisterSuccess={(updatedUsersList, loggedInUser) => {
+                  handleRegisterSuccess(updatedUsersList, loggedInUser);
+                  setIsAuthModalOpen(false);
+                  setAuthActionWarning(null);
+                }}
+              />
+            </div>
+
           </div>
         </div>
       )}
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-12 text-right">
-        
-        {/* Render Booking Portal tab */}
-        {activeTab === "booking" && (
-          <div className="space-y-10 animate-in fade-in duration-300">
-            <ClientPortal 
-              onAddBooking={handleAddBooking} 
-              currentUser={currentUser}
-              onOpenLogin={handleOpenLogin}
-            />
-          </div>
-        )}
-
-        {/* Render Dashboard tab */}
-        {activeTab === "dashboard" && (
-          currentUser ? (
-            <BusinessDashboard 
-              bookings={bookings} 
-              currentUser={currentUser}
-              currentRole={currentUser.role} 
-              onCancelBooking={handleCancelBooking}
-              onRateBooking={handleRateBooking}
-              onUpdateBookingStatus={handleUpdateBookingStatus}
-            />
-          ) : (
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 md:p-12 text-center space-y-8 shadow-sm max-w-2xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-              <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 mx-auto">
-                <Lock className="w-7 h-7" />
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-xl font-bold text-slate-900">ورود به بخش مدیریت و متخصصین</h3>
-                <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
-                  دسترسی به ابزارهای هوش مصنوعی، قیمت‌گذاری پویا، کمپین‌های تبلیغاتی هوشمند و ارزیابی عملکرد آرتیست‌ها مختص همکاران و مدیران سالن زیبایی لجند می‌باشد.
-                </p>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4 text-right pt-2">
-                <div className="border border-slate-150 rounded-2xl p-5 hover:border-slate-300 hover:bg-slate-50/50 transition-all flex flex-col justify-between">
-                  <div className="space-y-1.5 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-2">پنل مدیریت سالن</h4>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      نظارت بر شعبه‌ها، تراکنش‌های مالی، تنظیم ضرایب قیمت‌گذاری هوشمند تقاضا و آمار نوبت‌ها.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleOpenLogin("admin")}
-                    className="w-full bg-slate-900 hover:bg-slate-850 text-white text-xs font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                  >
-                    <span>ورود به عنوان مدیریت</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-indigo-300 rotate-180" />
-                  </button>
-                </div>
-
-                <div className="border border-slate-150 rounded-2xl p-5 hover:border-slate-300 hover:bg-slate-50/50 transition-all flex flex-col justify-between">
-                  <div className="space-y-1.5 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-2">پنل متخصص زیبایی</h4>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      مشاهده برنامه زمان‌بندی روزانه، ماتریس ارزیابی مهارت، امتیاز رضایت مشتریان و اطلاعات خدمات.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleOpenLogin("artist")}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                  >
-                    <span>ورود به عنوان متخصص</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-indigo-200 rotate-180" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-100 pt-4 text-xs text-slate-400 flex items-center justify-center gap-1">
-                <span>یا برای ثبت نوبت به</span>
-                <button
-                  onClick={() => setActiveTab("booking")}
-                  className="text-indigo-600 hover:text-indigo-700 font-bold transition-colors underline decoration-dotted"
-                >
-                  صفحه اصلی نوبت‌دهی مشتریان
-                </button>
-                <span>بازگردید.</span>
-              </div>
-            </div>
-          )
-        )}
-
-        {/* Render Roadmap Progress tab */}
-        {activeTab === "roadmap" && (
-          <RoadmapProgress />
-        )}
-
-      </main>
-
-      {/* Persistent Elegant Brand Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900 text-slate-400 py-10 px-6 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1 text-center md:text-right">
-            <p className="font-bold text-white text-sm">پلتفرم ابری هوشمند زیبایی لجند (Legend AI)</p>
-            <p className="text-slate-500 font-semibold">نسخه ۱.۰.۴ بتا • سامانه پرداخت کارت به کارت و شتاب کاملاً ایمن</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-slate-500 font-semibold text-xs" dir="ltr">
-            <span className="text-slate-300">✓ فازهای ۱ و ۲ فعال</span>
-            <span>•</span>
-            <span>پشتیبانی از پروتکل TLS 1.3</span>
-            <span>•</span>
-            <span>درگاه شتاب آزمایشی</span>
-            <span>•</span>
-            <span>همگام با هوش مصنوعی گوگل جمینی</span>
-          </div>
-        </div>
-      </footer>
-
-      {/* Floating Style Consultant AI Assistant */}
-      <AuraBot />
-
-      {/* Global Login Modal Portal */}
-      <LoginModal 
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-        initialRole={loginModalInitialRole}
-      />
     </div>
   );
 }

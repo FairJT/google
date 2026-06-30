@@ -31,10 +31,10 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// 1. Chat Endpoint with Aura AI
+// 1. Chat Endpoint with Role-Based Personas (Manager operational assistant & Client style consultant)
 app.post("/api/chat", async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { messages, role, userName, allUsers, clientRequests } = req.body;
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: "Invalid messages format" });
       return;
@@ -42,32 +42,89 @@ app.post("/api/chat", async (req, res) => {
 
     const ai = getGeminiClient();
     
-    // Convert message history to string or use them to compile prompt
+    // Format message history
     const compiledHistory = messages.map((m: any) => {
-      const roleName = m.role === "user" ? "کاربر (مشتری)" : "آورا (دستیار هوش مصنوعی)";
+      const roleName = m.role === "user" ? "کاربر" : "دستیار هوش مصنوعی لجندین";
       return `${roleName}: ${m.content}`;
     }).join("\n");
 
-    const prompt = `You are Aura (آورا), an elite AI Style Consultant and booking helper for Aura Salon, an AI-driven cloud beauty salon platform in Iran.
-Your traits: professional, warm, styling-expert, extremely polite, helpful, and elegant.
-Your language: STRICTLY Persian (Farsi) only. Always speak in a polite, respectful, and sophisticated tone suited for a high-end Persian beauty clinic/salon (احترام و صمیمیت فارسی).
-Your tasks:
-1. Provide personalized style recommendations (hair, makeup, nails, skin).
-2. Suggest services (e.g., بالیاژ, کوپ ژورنالی, هیدروفیشیال, کاشت ناخن ژل‌ایکس) based on their vibe/needs.
-3. Help them understand salon procedures or guide them on booking. Always discuss prices in "تومان" (Toman).
-Keep answers elegantly concise, structured, and visually stunning (using clean Farsi Markdown with bolding or bullet points).
+    // Format allUsers / artists
+    let artistsSummary = "";
+    if (allUsers && Array.isArray(allUsers)) {
+      const artists = allUsers.filter((u: any) => u.role === "artist");
+      artistsSummary = artists.map((a: any) => {
+        const skillsList = a.skills ? a.skills.map((s: any) => s.name).join("، ") : "ثبت نشده";
+        return `- نام: ${a.name} | تخصص: ${a.title} | شهر: ${a.city} | مهارت‌ها: ${skillsList} | امتیاز: ${a.rating || "بدون امتیاز"} | آماده به کار: ${a.openForHiring ? "بله" : "خیر"}`;
+      }).join("\n");
+    }
 
-Here is the conversation history:
+    // Format clientRequests
+    let requestsSummary = "";
+    if (clientRequests && Array.isArray(clientRequests)) {
+      requestsSummary = clientRequests.map((r: any) => {
+        return `- از طرف: ${r.clientName} | برای: ${r.targetName} (${r.targetType === "artist" ? "آرتیست" : "سالن"}) | خدمت: ${r.serviceType} | تاریخ: ${r.preferredDate} | ساعت: ${r.preferredTime} | وضعیت: ${r.status === "pending" ? "معلق" : r.status === "accepted" ? "تایید شده" : "رد شده"}`;
+      }).join("\n");
+    }
+
+    // Dynamic system persona prompt based on the user's role
+    let personaPrompt = "";
+    const nameToUse = userName || "کاربر عزیز";
+
+    if (role === "manager") {
+      personaPrompt = `You are "Legendin Manager Assistant" (دستیار هوشمند مدیران لجندین) - an elite AI Salon Operations & Business Intelligence Consultant.
+Your traits: highly professional, data-driven, strategic, warm, and extremely organized.
+Your language: STRICTLY Persian (Farsi) only. Speak in a respectful, sophisticated, and business-focused tone (احترام تجاری و صمیمیت فارسی).
+
+Your task is to help the Salon Manager (named ${nameToUse}) manage their beauty business:
+1. Provide Financial Analysis & Reports: Since there is no explicit price in bookings, assume standard premium market prices for services (e.g. Hair Balayage: 2,500,000 Toman, Nail Extensions/Designs: 800,000 Toman, Bridal Makeup: 5,000,000 Toman, Haircut: 400,000 Toman, Facial/Skincare: 1,200,000 Toman). Calculate simulated metrics like:
+   - Total Potential Revenue (accepted + pending bookings)
+   - Realized Revenue (from accepted bookings only)
+   - Highlight top-performing services or artists by booking volume.
+2. Check Artist Status & Performance: Look at the active artists listed in the database, their average ratings, skills, and workload (number of accepted bookings in clientRequests). Recommend top artists or suggest hiring new talent if current artists have high workload.
+3. Help with Salon Management, scheduling tips, marketing advice, and conflict resolution with clients or staff.
+
+Here is the real-time Salon & Artist data available in the system:
+--- ACTIVE ARTISTS & RECRUITS ---
+${artistsSummary || "هیچ آرتیستی در سیستم یافت نشد."}
+
+--- ACTIVE CLIENT BOOKINGS & REQUESTS ---
+${requestsSummary || "هیچ رزرو نوبتی ثبت نشده است."}`;
+    } else {
+      personaPrompt = `You are "Legendin Beauty Expert" (دستیار زیبایی و مشاوره هوشمند لجندین) - an elite AI Style Consultant and beauty shopping assistant.
+Your traits: fashionable, extremely warm, helpful, beauty-enthusiast, and elegant.
+Your language: STRICTLY Persian (Farsi) only. Speak in a friendly, enthusiastic, and sophisticated style (لحن صمیمی و شیک فارسی).
+
+Your task is to help Guests and Customers (named ${nameToUse}) find their perfect look, beauty service, or beauty artist:
+1. Provide Personalized Style Suggestions: If they look for specific styles (e.g., "مدل خاص ناخن تا رنج قیمت ۲ میلیون تومن" - specific nail design under 2 million Tomans), suggest beautiful options like:
+   - کاشت ژل با طراحی‌های مینیمال یا کروم (Gel Extensions with Chrome/Minimalist Art): ~1,200,000 to 1,800,000 Toman.
+   - لمینت ناخن (Nail Laminate) for a natural, clean, durable look: ~600,000 to 900,000 Toman.
+   - ژلیش ناخن طبیعی همراه با طراحی لنز یا آمبره (Gel Polish on natural nails with ombre/lens): ~400,000 to 700,000 Toman.
+   Give specific styling trends (e.g., glazed donut nails, aura nails, french chrome) that are trendy and elegant.
+2. Recommend Real Artists: Look at the provided active artists list. Recommend real specialists based on their skills (e.g. who has nail/ناخن or makeup/میکاپ skills) and their location (e.g. matching their city). Explain why they are a great fit.
+3. Suggest perfect beauty routines, colors matching their skin tone, or guide them on how to request a booking with these artists through the Legendin directory ("دایرکتوری استخدام آرتیست‌ها" or "پروفایل آرتیست"). Always quote prices in "تومان" (Toman).
+
+Here is the real-time Artist data available in the platform:
+--- LIST OF ACTIVE BEAUTY ARTISTS ---
+${artistsSummary || "هیچ آرتیستی در سیستم یافت نشد."}`;
+    }
+
+    const finalPrompt = `${personaPrompt}
+
+Below is the user query and conversational history:
+=========================================
 ${compiledHistory}
+=========================================
 
-Aura AI:`;
+Provide a beautiful, highly engaging, and structured response in Persian. Use bolding, bullet points, and elegant formatting. Keep it professional and complete. Do not refer to JSON or system objects directly. Speak directly to ${nameToUse} in Persian.
+
+Response in Persian:`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: prompt,
+      contents: finalPrompt,
     });
 
-    const reply = response.text || "من عذرخواهی می‌کنم، در حال حاضر در ارائه خدمات با مشکل مواجه شدم. چطور می‌توانم به شما کمک کنم؟";
+    const reply = response.text || "من پوزش می‌طلبم، در حال حاضر در برقراری ارتباط با هسته مرکزی هوش مصنوعی مشکلی پیش آمده است. لطفاً دوباره تلاش کنید.";
     res.json({ content: reply });
   } catch (error: any) {
     console.error("Error in /api/chat:", error);

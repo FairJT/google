@@ -1,75 +1,119 @@
-export interface Service {
-  id: string;
+export type UserRole = "client" | "artist" | "manager";
+
+export interface Skill {
   name: string;
-  category: "Hair" | "Makeup" | "Nails" | "Skin";
-  duration: number; // in minutes
-  basePrice: number; // in USD
-  popularity: number; // 1 to 10 scale
+  category: string; // e.g. "رنگ مو", "ناخن", "میکاپ", "پوست"
+}
+
+export interface PortfolioItem {
+  id: string;
+  imageUrl: string;
+  title: string;
   description: string;
 }
 
-export interface Artist {
+export interface Review {
   id: string;
-  name: string;
-  role: string;
-  rating: number;
-  reviewCount: number;
-  image: string;
-  skills: { skill: string; percentage: number }[];
-  verified: boolean;
-  score: number; // Artist evaluation score (out of 100)
+  reviewerName: string;
+  reviewerAvatar: string;
+  rating: number; // 1-5
+  comment: string;
+  date: string; // Shamsi format, e.g. "1405/04/10"
 }
 
-export interface Salon {
+export interface User {
   id: string;
   name: string;
-  rating: number;
-  reviews: number;
-  location: string;
-  image: string;
-  description: string;
-  services: Service[];
-  verified: boolean;
+  role: UserRole;
+  phone: string;
+  email?: string;
+  avatar: string;
+  coverImage?: string;
+  title: string; // e.g. "متخصص میکاپ عروس", "مدیر سالن لاوین"
+  city: string; // e.g. "تهران", "اصفهان", "شیراز"
+  bio: string;
+  
+  // Role-specific Rich Profile Data
+  yearsOfExperience?: number;
+  certifications?: string[];
+  skills?: Skill[];
+  portfolio?: PortfolioItem[];
+  reviews?: Review[];
+  rating?: number;
+  
+  // Toggles for availability
+  acceptingRequests?: boolean; // پذیرش درخواست مشتری
+  openForHiring?: boolean; // آماده به کار (for artists) or در حال استخدام (for managers)
+  
+  // For Salon Managers / Salons
+  salonName?: string;
+  salonLocation?: string;
+  salonDescription?: string;
 }
 
-export interface Booking {
+export interface Comment {
   id: string;
-  salonId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  authorRole: UserRole;
+  content: string;
+  createdAt: string; // Shamsi or friendly time
+  likesCount: number;
+  likedBy: string[]; // User IDs who liked the comment
+}
+
+export interface Post {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  authorRole: UserRole;
+  content: string;
+  image?: string;
+  tag?: string; // e.g. "آموزش", "تجربه", "استخدام", "ترند"
+  createdAt: string; // Shamsi time
+  likesCount: number;
+  likedBy: string[]; // User IDs who liked the post
+  comments: Comment[];
+}
+
+export interface HiringOffer {
+  id: string;
+  managerId: string;
+  managerName: string;
   salonName: string;
   artistId: string;
   artistName: string;
-  serviceId: string;
-  serviceName: string;
-  date: string;
-  time: string;
-  price: number;
-  status: "Confirmed" | "Completed" | "Cancelled";
-  createdAt: string;
-  rating?: number;
-  userPhone?: string;
-  userName?: string;
+  message: string;
+  offerAmount?: string; // e.g., "۱۰,۰۰۰,۰۰۰ تومان"
+  status: "pending" | "accepted" | "declined";
+  createdAt: string; // Shamsi date
 }
 
-export interface Message {
+export interface ClientRequest {
   id: string;
-  role: "user" | "model";
-  content: string;
-  timestamp: string;
+  clientId: string;
+  clientName: string;
+  clientPhone: string;
+  targetId: string; // Artist or Salon ID
+  targetName: string;
+  targetType: "artist" | "salon";
+  serviceType: string;
+  preferredDate: string; // Shamsi, e.g. "1405/04/12"
+  preferredTime: string; // HH:MM
+  note: string;
+  status: "pending" | "accepted" | "declined";
+  createdAt: string; // Shamsi date
 }
 
-export interface DynamicPricingInfo {
-  multiplier: number;
-  finalPrice: number;
-  demandLevel: "Low" | "Moderate" | "High" | "Surge";
-  reason: string;
+export interface ProfileStrengthItem {
+  label: string;
+  points: number;
+  completed: boolean;
 }
 
-export interface AppUser {
-  id: string;
-  name: string;
-  role: "client" | "admin" | "artist";
-  phone?: string;
-  avatar?: string;
-  artistId?: string;
+export interface ProfileStrength {
+  percentage: number;
+  checklist: ProfileStrengthItem[];
 }
-
