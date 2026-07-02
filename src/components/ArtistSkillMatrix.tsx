@@ -90,7 +90,7 @@ export default function ArtistSkillMatrix({ currentUser, artists, selectedArtist
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
-            <Award className="w-5 h-5 text-[#6B7A4F]" />
+            <Award className="w-5 h-5 text-[#0284c7]" />
             <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">ماتریس مهارتی و ارزیابی چندبعدی</h3>
           </div>
           <p className="text-[10px] text-slate-500">
@@ -153,8 +153,8 @@ export default function ArtistSkillMatrix({ currentUser, artists, selectedArtist
               <Radar
                 name={currentArtist.name}
                 dataKey={currentArtist.name}
-                stroke="#6B7A4F"
-                fill="#6B7A4F"
+                stroke="#0284c7"
+                fill="#0284c7"
                 fillOpacity={0.3}
               />
 
@@ -192,7 +192,7 @@ export default function ArtistSkillMatrix({ currentUser, artists, selectedArtist
               
               <div className="flex justify-between items-center text-[11px]">
                 <span className="text-slate-500">سطح فنی ممیزی پلتفرم:</span>
-                <span className="font-bold text-[#6B7A4F] bg-[#6B7A4F]/10 px-2 py-0.5 rounded">
+                <span className="font-bold text-[#0284c7] bg-[#0284c7]/10 px-2 py-0.5 rounded">
                   {currentArtist.title.split("در")[0] || "متخصص ارشد"}
                 </span>
               </div>
@@ -200,7 +200,7 @@ export default function ArtistSkillMatrix({ currentUser, artists, selectedArtist
           </div>
 
           <div className="border border-slate-100 p-3 rounded-xl text-right flex gap-2">
-            <HelpCircle className="w-4 h-4 text-[#6B7A4F] shrink-0 mt-0.5" />
+            <HelpCircle className="w-4 h-4 text-[#0284c7] shrink-0 mt-0.5" />
             <p className="text-[9.5px] text-slate-400 leading-normal">
               نمرات مهارت‌های فنی به صورت فصلی بر اساس کارگاه‌های ارزیابی لجند و بازخورد مشتریان واقعی به‌روزرسانی می‌شود.
             </p>

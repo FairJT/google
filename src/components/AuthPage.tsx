@@ -213,12 +213,12 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
       <header className="bg-white border-b border-slate-200/80 px-4 py-4.5 shadow-3xs">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#6B7A4F] flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-[#0284c7] flex items-center justify-center shadow-md">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                لجندین <span className="text-[#6B7A4F] text-[10px] bg-[#6B7A4F]/10 px-2 py-0.5 rounded-md font-bold">بستر بازار کار زیبایی</span>
+                لجندین <span className="text-[#0284c7] text-[10px] bg-[#0284c7]/10 px-2 py-0.5 rounded-md font-bold">بستر بازار کار زیبایی</span>
               </h1>
               <p className="text-[10px] text-slate-400 font-bold mt-0.5">بزرگترین شبکه تعاملی، کاریابی و استخدام متخصصین سالن‌های زیبایی</p>
             </div>
@@ -236,7 +236,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
         {/* Left Column: Brand Pitch / Features (Visible on larger screens) */}
         <div className="flex-1 space-y-6 text-right max-w-md hidden md:block">
           <div className="space-y-2">
-            <span className="text-xs bg-[#6B7A4F]/10 text-[#6B7A4F] px-3 py-1.5 rounded-full font-extrabold tracking-wide">جامعه متخصصین زیبایی ایران</span>
+            <span className="text-xs bg-[#0284c7]/10 text-[#0284c7] px-3 py-1.5 rounded-full font-extrabold tracking-wide">جامعه متخصصین زیبایی ایران</span>
             <h2 className="text-2xl font-black text-slate-800 leading-tight">شبکه اجتماعی لجندین چیست؟</h2>
             <p className="text-xs text-slate-500 leading-relaxed font-medium">
               لجندین اولین پلتفرم دوطرفه مجهز به ابزار راداری تخصص‌هاست که مستقیماً آرتیست‌های خلاق را به برترین کارفرمایان سالن‌های لوکس متصل می‌کند.
@@ -245,7 +245,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
 
           <div className="space-y-4">
             <div className="flex items-start gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-3xs">
-              <div className="p-2 bg-[#6B7A4F]/10 rounded-xl text-[#6B7A4F]">
+              <div className="p-2 bg-[#0284c7]/10 rounded-xl text-[#0284c7]">
                 <Briefcase className="w-5 h-5" />
               </div>
               <div>
@@ -255,7 +255,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
             </div>
 
             <div className="flex items-start gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-3xs">
-              <div className="p-2 bg-[#6B7A4F]/10 rounded-xl text-[#6B7A4F]">
+              <div className="p-2 bg-[#0284c7]/10 rounded-xl text-[#0284c7]">
                 <Building className="w-5 h-5" />
               </div>
               <div>
@@ -265,7 +265,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
             </div>
 
             <div className="flex items-start gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-3xs">
-              <div className="p-2 bg-[#6B7A4F]/10 rounded-xl text-[#6B7A4F]">
+              <div className="p-2 bg-[#0284c7]/10 rounded-xl text-[#0284c7]">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
@@ -289,7 +289,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
               }}
               className={`flex-1 text-center py-4 text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                 activeTab === "login"
-                  ? "bg-white text-[#6B7A4F] border-b-2 border-[#6B7A4F]"
+                  ? "bg-white text-[#0284c7] border-b-2 border-[#0284c7]"
                   : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/80"
               }`}
             >
@@ -304,7 +304,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
               }}
               className={`flex-1 text-center py-4 text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                 activeTab === "register"
-                  ? "bg-white text-[#6B7A4F] border-b-2 border-[#6B7A4F]"
+                  ? "bg-white text-[#0284c7] border-b-2 border-[#0284c7]"
                   : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/80"
               }`}
             >
@@ -347,7 +347,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       placeholder="مثال: 09121111111"
                       value={loginPhone}
                       onChange={(e) => setLoginPhone(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#6B7A4F] outline-none text-xs rounded-xl p-3 pl-10 text-slate-800 font-bold tracking-wider"
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0284c7] outline-none text-xs rounded-xl p-3 pl-10 text-slate-800 font-bold tracking-wider"
                     />
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   </div>
@@ -362,7 +362,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       placeholder="حداقل ۴ کاراکتر (مثال: ۱۲۳۴۵۶)"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#6B7A4F] outline-none text-xs rounded-xl p-3 pl-10 text-slate-800 font-bold tracking-wider"
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0284c7] outline-none text-xs rounded-xl p-3 pl-10 text-slate-800 font-bold tracking-wider"
                     />
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   </div>
@@ -370,7 +370,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
 
                 <button
                   type="submit"
-                  className="w-full bg-[#6B7A4F] hover:bg-[#57643F] text-white py-3 rounded-xl text-xs font-black shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white py-3 rounded-xl text-xs font-black shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <LogIn className="w-4 h-4" />
                   ورود امن به سیستم بازار کار
@@ -391,7 +391,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       onClick={() => setRegRole("artist")}
                       className={`py-2 rounded-xl text-[10px] font-black border text-center cursor-pointer transition-all ${
                         regRole === "artist"
-                          ? "bg-[#6B7A4F]/10 border-[#6B7A4F] text-[#6B7A4F] font-black"
+                          ? "bg-[#0284c7]/10 border-[#0284c7] text-[#0284c7] font-black"
                           : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
                       }`}
                     >
@@ -402,7 +402,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       onClick={() => setRegRole("manager")}
                       className={`py-2 rounded-xl text-[10px] font-black border text-center cursor-pointer transition-all ${
                         regRole === "manager"
-                          ? "bg-[#6B7A4F]/10 border-[#6B7A4F] text-[#6B7A4F] font-black"
+                          ? "bg-[#0284c7]/10 border-[#0284c7] text-[#0284c7] font-black"
                           : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
                       }`}
                     >
@@ -413,7 +413,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       onClick={() => setRegRole("client")}
                       className={`py-2 rounded-xl text-[10px] font-black border text-center cursor-pointer transition-all ${
                         regRole === "client"
-                          ? "bg-[#6B7A4F]/10 border-[#6B7A4F] text-[#6B7A4F] font-black"
+                          ? "bg-[#0284c7]/10 border-[#0284c7] text-[#0284c7] font-black"
                           : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
                       }`}
                     >
@@ -431,7 +431,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       placeholder="مثال: الناز راد"
                       value={regName}
                       onChange={(e) => setRegName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#6B7A4F] outline-none text-xs rounded-xl p-2.5 pl-9 text-slate-800 font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0284c7] outline-none text-xs rounded-xl p-2.5 pl-9 text-slate-800 font-bold"
                     />
                     <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   </div>
@@ -446,7 +446,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       placeholder="مثال: 09121234567"
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#6B7A4F] outline-none text-xs rounded-xl p-2.5 pl-9 text-slate-800 font-bold tracking-wider"
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0284c7] outline-none text-xs rounded-xl p-2.5 pl-9 text-slate-800 font-bold tracking-wider"
                     />
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   </div>
@@ -459,7 +459,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                       <select
                         value={regCity}
                         onChange={(e) => setRegCity(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#6B7A4F] outline-none text-xs rounded-xl p-2.5 text-slate-800 font-bold"
+                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0284c7] outline-none text-xs rounded-xl p-2.5 text-slate-800 font-bold"
                       >
                         <option value="تهران">تهران</option>
                         <option value="اصفهان">اصفهان</option>
@@ -479,7 +479,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                         placeholder="حداقل ۴ حرف"
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#6B7A4F] outline-none text-xs rounded-xl p-2.5 pl-9 text-slate-800 font-bold"
+                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0284c7] outline-none text-xs rounded-xl p-2.5 pl-9 text-slate-800 font-bold"
                       />
                       <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     </div>
@@ -489,7 +489,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                 {/* ROLE-SPECIFIC ADDITIONAL FIELDS */}
                 {regRole === "manager" && (
                   <div className="p-3 bg-slate-50 border border-slate-150 rounded-2xl space-y-2.5 animate-fade-in">
-                    <span className="text-[9px] text-[#6B7A4F] font-black block">🏢 اطلاعات تکمیلی سالن‌دار:</span>
+                    <span className="text-[9px] text-[#0284c7] font-black block">🏢 اطلاعات تکمیلی سالن‌دار:</span>
                     
                     <div className="space-y-1">
                       <label className="block text-[9px] text-slate-400 font-extrabold">نام تجاری سالن زیبایی *</label>
@@ -498,7 +498,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                         placeholder="مثال: سالن زیبایی شیک‌رخ"
                         value={salonName}
                         onChange={(e) => setSalonName(e.target.value)}
-                        className="w-full bg-white border border-slate-200 focus:border-[#6B7A4F] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
+                        className="w-full bg-white border border-slate-200 focus:border-[#0284c7] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
                       />
                     </div>
 
@@ -509,7 +509,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                         placeholder="مثال: جردن، خیابان گلفام، پلاک ۱۰"
                         value={salonLocation}
                         onChange={(e) => setSalonLocation(e.target.value)}
-                        className="w-full bg-white border border-slate-200 focus:border-[#6B7A4F] outline-none text-xs rounded-lg p-2 text-slate-800 font-medium"
+                        className="w-full bg-white border border-slate-200 focus:border-[#0284c7] outline-none text-xs rounded-lg p-2 text-slate-800 font-medium"
                       />
                     </div>
                   </div>
@@ -517,7 +517,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
 
                 {regRole === "artist" && (
                   <div className="p-3 bg-slate-50 border border-slate-150 rounded-2xl space-y-2.5 animate-fade-in">
-                    <span className="text-[9px] text-[#6B7A4F] font-black block">🎨 اطلاعات تخصصی آرتیست:</span>
+                    <span className="text-[9px] text-[#0284c7] font-black block">🎨 اطلاعات تخصصی آرتیست:</span>
                     
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
@@ -527,7 +527,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                           placeholder="مثال: مستر هیرکات"
                           value={artistTitle}
                           onChange={(e) => setArtistTitle(e.target.value)}
-                          className="w-full bg-white border border-slate-200 focus:border-[#6B7A4F] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
+                          className="w-full bg-white border border-slate-200 focus:border-[#0284c7] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
                         />
                       </div>
 
@@ -536,7 +536,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                         <select
                           value={artistCategory}
                           onChange={(e) => setArtistCategory(e.target.value)}
-                          className="w-full bg-white border border-slate-200 focus:border-[#6B7A4F] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
+                          className="w-full bg-white border border-slate-200 focus:border-[#0284c7] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
                         >
                           <option value="رنگ مو">رنگ مو</option>
                           <option value="ناخن">لاین ناخن</option>
@@ -554,7 +554,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                         placeholder="مثال: تکنیک ایرتاچ روسی"
                         value={artistSkillName}
                         onChange={(e) => setArtistSkillName(e.target.value)}
-                        className="w-full bg-white border border-slate-200 focus:border-[#6B7A4F] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
+                        className="w-full bg-white border border-slate-200 focus:border-[#0284c7] outline-none text-xs rounded-lg p-2 text-slate-800 font-bold"
                       />
                     </div>
                   </div>
@@ -562,7 +562,7 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
 
                 <button
                   type="submit"
-                  className="w-full bg-[#6B7A4F] hover:bg-[#57643F] text-white py-2.5 rounded-xl text-xs font-black shadow-md transition-all active:scale-98 cursor-pointer mt-3"
+                  className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white py-2.5 rounded-xl text-xs font-black shadow-md transition-all active:scale-98 cursor-pointer mt-3"
                 >
                   تکمیل ثبت‌نام و ورود به پنل کاربری
                 </button>
@@ -590,8 +590,8 @@ export default function AuthPage({ allUsers, onLoginSuccess, onRegisterSuccess }
                     className="w-7 h-7 rounded-full object-cover border border-slate-100 shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <h5 className="text-[9.5px] font-black text-slate-800 truncate group-hover:text-[#6B7A4F]">{demo.name}</h5>
-                    <p className="text-[8px] text-[#6B7A4F] font-extrabold truncate">{demo.role}</p>
+                    <h5 className="text-[9.5px] font-black text-slate-800 truncate group-hover:text-[#0284c7]">{demo.name}</h5>
+                    <p className="text-[8px] text-[#0284c7] font-extrabold truncate">{demo.role}</p>
                   </div>
                 </button>
               ))}

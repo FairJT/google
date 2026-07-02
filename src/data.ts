@@ -1,4 +1,22 @@
-import { User, Post, Skill } from "./types";
+import { User, Post, Skill, Service } from "./types";
+
+export const seedServices: Service[] = [
+  // Top-level lines (parent services)
+  { id: "s_hair_color", name: "لاین رنگ و لایت مو", durationMinutes: 0, price: 0, currency: "تومان" },
+  { id: "s_nails", name: "لاین تخصصی ناخن", durationMinutes: 0, price: 0, currency: "تومان" },
+  { id: "s_makeup", name: "لاین میکاپ و گریم", durationMinutes: 0, price: 0, currency: "تومان" },
+  { id: "s_skincare", name: "لاین پاکسازی و فیشیال پوست", durationMinutes: 0, price: 0, currency: "تومان" },
+
+  // Bookable services under lines
+  { id: "s1", parentServiceId: "s_hair_color", name: "بالیاژ روسی طلایی", durationMinutes: 180, price: 2500000, currency: "تومان" },
+  { id: "s2", parentServiceId: "s_hair_color", name: "کراتین و احیای مو", durationMinutes: 120, price: 1800000, currency: "تومان" },
+  { id: "s3", parentServiceId: "s_nails", name: "کاشت ناخن ژل", durationMinutes: 90, price: 800000, currency: "تومان" },
+  { id: "s4", parentServiceId: "s_nails", name: "ژلیش ناخن طبیعی", durationMinutes: 45, price: 400000, currency: "تومان" },
+  { id: "s5", parentServiceId: "s_nails", name: "لمینت ناخن", durationMinutes: 60, price: 700000, currency: "تومان" },
+  { id: "s6", parentServiceId: "s_makeup", name: "میکاپ تخصصی عروس", durationMinutes: 240, price: 5000000, currency: "تومان" },
+  { id: "s7", parentServiceId: "s_makeup", name: "کانتورینگ و فیس‌لیفت", durationMinutes: 90, price: 1500000, currency: "تومان" },
+  { id: "s8", parentServiceId: "s_skincare", name: "پاکسازی پوست و هیدرودرمی", durationMinutes: 75, price: 1200000, currency: "تومان" }
+];
 
 export const SKILLS_LIST: Skill[] = [
   { name: "بالیاژ و رنگ فانتزی", category: "رنگ مو" },
@@ -14,6 +32,24 @@ export const SKILLS_LIST: Skill[] = [
 ];
 
 export const seedUsers: User[] = [
+  // --- SUPER ADMIN ---
+  {
+    id: "admin",
+    name: "مدیر کل سیستم (Super Admin)",
+    role: "manager",
+    phone: "09000000000",
+    email: "fair.blizz@gmail.com",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop",
+    coverImage: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=800&auto=format&fit=crop",
+    title: "مدیر ارشد و طراح سیستم لجندین",
+    city: "تهران",
+    bio: "مدیر ارشد پلتفرم لجندین. دسترسی کامل به ابزارها، قابلیت بازنشانی و مانیتورینگ جامع داده‌ها.",
+    salonName: "دفتر مرکزی لجندین",
+    salonLocation: "تهران، الهیه، برج نگین",
+    salonDescription: "تیم پشتیبانی، توسعه و نظارت فنی پلتفرم لجندین کشور.",
+    openForHiring: false,
+    acceptingRequests: true
+  },
   // --- SALON MANAGERS (5) ---
   {
     id: "m1",

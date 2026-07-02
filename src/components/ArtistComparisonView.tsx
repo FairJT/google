@@ -86,7 +86,7 @@ export default function ArtistComparisonView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4.5">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <Scale className="w-5 h-5 text-[#6B7A4F]" />
+            <Scale className="w-5 h-5 text-[#0284c7]" />
             <h3 className="text-base font-bold text-slate-950">ابزار مقایسه تخصصی آرتیست‌ها (Comparison Dashboard)</h3>
           </div>
           <p className="text-[11px] text-slate-500">
@@ -140,21 +140,21 @@ export default function ArtistComparisonView({
         <div className="lg:col-span-7 grid grid-cols-2 gap-4">
           
           {/* Artist A Card */}
-          <div className="bg-slate-50/50 border border-[#6B7A4F]/20 rounded-2xl p-4 space-y-4">
+          <div className="bg-slate-50/50 border border-[#0284c7]/20 rounded-2xl p-4 space-y-4">
             <div className="flex flex-col items-center text-center space-y-2">
               <div className="relative">
                 <img
                   src={artistA.avatar}
                   alt={artistA.name}
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-[#6B7A4F]"
+                  className="w-16 h-16 rounded-2xl object-cover border-2 border-[#0284c7]"
                 />
-                <span className="absolute -bottom-1 -right-1 bg-[#6B7A4F] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                <span className="absolute -bottom-1 -right-1 bg-[#0284c7] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
                   هنرمند اول
                 </span>
               </div>
               <div>
                 <h4 className="text-xs font-extrabold text-slate-900">{artistA.name}</h4>
-                <p className="text-[10px] text-[#6B7A4F] font-bold leading-tight mt-0.5">{artistA.title}</p>
+                <p className="text-[10px] text-[#0284c7] font-bold leading-tight mt-0.5">{artistA.title}</p>
                 <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mt-1 font-bold">
                   <MapPin className="w-3 h-3 shrink-0" /> {artistA.city}
                 </div>
@@ -211,7 +211,7 @@ export default function ArtistComparisonView({
             {currentUser.role === "manager" && (
               <button
                 onClick={() => onSendHiringOffer(artistA)}
-                className="w-full bg-[#6B7A4F] hover:bg-[#57643F] text-white text-[10px] font-extrabold py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white text-[10px] font-extrabold py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 جذب {artistA.name.split(" ")[0]}
@@ -322,7 +322,7 @@ export default function ArtistComparisonView({
                 {comparisonSummary.betterRating && (
                   <div className="flex justify-between items-center bg-white border border-slate-150 rounded-xl px-3 py-2 text-xs">
                     <span className="text-slate-500">بالاترین امتیاز رضایت مراجعین:</span>
-                    <span className="font-extrabold text-[#6B7A4F] flex items-center gap-1 bg-[#6B7A4F]/10 px-2.5 py-1 rounded-lg text-[10px]">
+                    <span className="font-extrabold text-[#0284c7] flex items-center gap-1 bg-[#0284c7]/10 px-2.5 py-1 rounded-lg text-[10px]">
                       <Star className="w-3 h-3 fill-amber-400 stroke-amber-400" />
                       {comparisonSummary.betterRating.name}
                     </span>
@@ -333,8 +333,8 @@ export default function ArtistComparisonView({
                 {comparisonSummary.betterExperience && (
                   <div className="flex justify-between items-center bg-white border border-slate-150 rounded-xl px-3 py-2 text-xs">
                     <span className="text-slate-500">سابقه و تجربه کارگاه ممیزی شده:</span>
-                    <span className="font-extrabold text-[#6B7A4F] flex items-center gap-1 bg-[#6B7A4F]/10 px-2.5 py-1 rounded-lg text-[10px]">
-                      <Award className="w-3 h-3 text-[#6B7A4F]" />
+                    <span className="font-extrabold text-[#0284c7] flex items-center gap-1 bg-[#0284c7]/10 px-2.5 py-1 rounded-lg text-[10px]">
+                      <Award className="w-3 h-3 text-[#0284c7]" />
                       {comparisonSummary.betterExperience.name}
                     </span>
                   </div>
@@ -344,8 +344,8 @@ export default function ArtistComparisonView({
                 {comparisonSummary.betterStrength && (
                   <div className="flex justify-between items-center bg-white border border-slate-150 rounded-xl px-3 py-2 text-xs">
                     <span className="text-slate-500">اعتبار رزومه و قدرت پروفایل:</span>
-                    <span className="font-extrabold text-[#6B7A4F] flex items-center gap-1 bg-[#6B7A4F]/10 px-2.5 py-1 rounded-lg text-[10px]">
-                      <ShieldCheck className="w-3 h-3 text-[#6B7A4F]" />
+                    <span className="font-extrabold text-[#0284c7] flex items-center gap-1 bg-[#0284c7]/10 px-2.5 py-1 rounded-lg text-[10px]">
+                      <ShieldCheck className="w-3 h-3 text-[#0284c7]" />
                       {comparisonSummary.betterStrength.name}
                     </span>
                   </div>

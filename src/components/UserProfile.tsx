@@ -1,14 +1,36 @@
 import React, { useState } from "react";
-import { User, Skill, PortfolioItem, Review, Post, Comment, UserRole } from "../types";
-import { Award, Star, CheckCircle2, ShieldCheck, Sparkles, Plus, Image, Trash2, Calendar, Phone, Mail, ToggleLeft, ToggleRight, MapPin, Briefcase, MessageSquare, Heart, Send, Tag, AlertCircle } from "lucide-react";
+import { User, Skill, PortfolioItem, Review, Post, Comment, UserRole, Transaction, HiringOffer, ClientRequest, LeaveRequest, JobApplication, DiscountedSlot } from "../types";
+import { Award, Star, CheckCircle2, ShieldCheck, Sparkles, Plus, Image, Trash2, Calendar, Phone, Mail, ToggleLeft, ToggleRight, MapPin, Briefcase, MessageSquare, Heart, Send, Tag, AlertCircle, DollarSign, Inbox, Settings, Upload } from "lucide-react";
 import { toPersianDigits, formatToman } from "../utils/shamsi";
 import ArtistSkillMatrix from "./ArtistSkillMatrix";
+import FinanceDashboard from "./FinanceDashboard";
+import RequestsInbox from "./RequestsInbox";
 
 const PRESET_POST_IMAGES = [
   "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1632345031435-8797b2d58045?q=80&w=600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=600&auto=format&fit=crop"
+];
+
+const PRESET_AVATARS = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1621574539437-4b7cb63120b8?q=80&w=200&auto=format&fit=crop"
+];
+
+const PRESET_COVERS = [
+  "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1632345031435-8797b2d58045?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1000&auto=format&fit=crop"
 ];
 
 const TAG_TRANSLATIONS: Record<string, string> = {
@@ -46,6 +68,17 @@ interface UserProfileProps {
   allUsers: User[];
   posts: Post[];
   onUpdatePosts: (updatedPosts: Post[]) => void;
+  transactions: Transaction[];
+  onUpdateTransactions: (updated: Transaction[]) => void;
+  hiringOffers?: HiringOffer[];
+  onUpdateHiringOffers?: (offers: HiringOffer[]) => void;
+  clientRequests?: ClientRequest[];
+  onUpdateClientRequests?: (requests: ClientRequest[]) => void;
+  leaveRequests?: LeaveRequest[];
+  onUpdateLeaveRequests?: (requests: LeaveRequest[]) => void;
+  jobApplications?: JobApplication[];
+  onUpdateJobApplications?: (apps: JobApplication[]) => void;
+  onAddDiscountedSlot?: (newSlot: DiscountedSlot) => void;
 }
 
 export default function UserProfile({
@@ -55,14 +88,70 @@ export default function UserProfile({
   onUpdateUsersList,
   allUsers,
   posts,
-  onUpdatePosts
+  onUpdatePosts,
+  transactions = [],
+  onUpdateTransactions,
+  hiringOffers = [],
+  onUpdateHiringOffers = () => {},
+  clientRequests = [],
+  onUpdateClientRequests = () => {},
+  leaveRequests = [],
+  onUpdateLeaveRequests = () => {},
+  jobApplications = [],
+  onUpdateJobApplications = () => {},
+  onAddDiscountedSlot = () => {}
 }: UserProfileProps) {
   const isOwnProfile = currentUser.id === profileUser.id;
+
+  const handleImageBrowse = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("لطفاً فقط فایل‌های تصویری انتخاب کنید.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        callback(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Local editing states (only used if isOwnProfile)
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bioText, setBioText] = useState(profileUser.bio || "");
   
+  // Full Profile Edit States
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState(profileUser.name);
+  const [editTitle, setEditTitle] = useState(profileUser.title);
+  const [editPhone, setEditPhone] = useState(profileUser.phone);
+  const [editEmail, setEditEmail] = useState(profileUser.email || "");
+  const [editCity, setEditCity] = useState(profileUser.city);
+  const [editExp, setEditExp] = useState(profileUser.yearsOfExperience || 0);
+  const [editAvatar, setEditAvatar] = useState(profileUser.avatar);
+  const [editCover, setEditCover] = useState(profileUser.coverImage || "");
+  const [editSalonName, setEditSalonName] = useState(profileUser.salonName || "");
+  const [editSalonLocation, setEditSalonLocation] = useState(profileUser.salonLocation || "");
+  const [editSalonDesc, setEditSalonDesc] = useState(profileUser.salonDescription || "");
+
+  // Sync edit fields when profileUser changes
+  React.useEffect(() => {
+    setEditName(profileUser.name);
+    setEditTitle(profileUser.title);
+    setEditPhone(profileUser.phone);
+    setEditEmail(profileUser.email || "");
+    setEditCity(profileUser.city);
+    setEditExp(profileUser.yearsOfExperience || 0);
+    setEditAvatar(profileUser.avatar);
+    setEditCover(profileUser.coverImage || "");
+    setEditSalonName(profileUser.salonName || "");
+    setEditSalonLocation(profileUser.salonLocation || "");
+    setEditSalonDesc(profileUser.salonDescription || "");
+  }, [profileUser.id]);
+
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillCategory, setNewSkillCategory] = useState("رنگ مو");
   
@@ -79,7 +168,9 @@ export default function UserProfile({
   const [profilePostImageUrl, setProfilePostImageUrl] = useState("");
   const [profileShowImageSelector, setProfileShowImageSelector] = useState(false);
   const [profileCommentInputs, setProfileCommentInputs] = useState<Record<string, string>>({});
-  const [profileTab, setProfileTab] = useState<"resume" | "posts">("resume");
+  const [profileTab, setProfileTab] = useState<"resume" | "posts" | "finance" | "inbox">("resume");
+  const [postIdToDelete, setPostIdToDelete] = useState<string | null>(null);
+  const [isTerminatingContract, setIsTerminatingContract] = useState(false);
 
   // Calculate profile strength & construct checklist
   const getProfileStrengthDetails = (user: User) => {
@@ -185,6 +276,36 @@ export default function UserProfile({
     onUpdateUsersList(updatedList);
   };
 
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) {
+      alert("نام و نام خانوادگی نمی‌تواند خالی باشد.");
+      return;
+    }
+    if (!editTitle.trim()) {
+      alert("عنوان تخصصی نمی‌تواند خالی باشد.");
+      return;
+    }
+
+    const updated: User = {
+      ...profileUser,
+      name: editName.trim(),
+      title: editTitle.trim(),
+      phone: editPhone.trim(),
+      email: editEmail.trim() || undefined,
+      city: editCity.trim(),
+      yearsOfExperience: profileUser.role === "client" ? undefined : Number(editExp),
+      avatar: editAvatar.trim(),
+      coverImage: editCover.trim() || undefined,
+      salonName: profileUser.role === "manager" ? editSalonName.trim() || undefined : profileUser.salonName,
+      salonLocation: profileUser.role === "manager" ? editSalonLocation.trim() || undefined : profileUser.salonLocation,
+      salonDescription: profileUser.role === "manager" ? editSalonDesc.trim() || undefined : profileUser.salonDescription,
+    };
+
+    updateUserAcrossState(updated);
+    setIsEditingProfile(false);
+  };
+
   const toggleAvailability = (key: "acceptingRequests" | "openForHiring") => {
     const updated = { 
       ...profileUser, 
@@ -249,10 +370,9 @@ export default function UserProfile({
   };
 
   const handleProfileDeletePost = (postId: string) => {
-    if (confirm("آیا از حذف این پست اطمینان دارید؟")) {
-      const updated = posts.filter(p => p.id !== postId);
-      onUpdatePosts(updated);
-    }
+    const updated = posts.filter(p => p.id !== postId);
+    onUpdatePosts(updated);
+    setPostIdToDelete(null);
   };
 
   const handleProfileAddComment = (postId: string, e: React.FormEvent) => {
@@ -301,9 +421,18 @@ export default function UserProfile({
             className="w-full h-full object-cover opacity-85"
           />
           {isOwnProfile && (
-            <span className="absolute top-3.5 right-3.5 bg-slate-900/70 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-xs">
-              پروفایل کاربری اختصاصی شما
-            </span>
+            <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between pointer-events-none">
+              <button
+                onClick={() => setIsEditingProfile(true)}
+                className="pointer-events-auto bg-white/95 hover:bg-white text-slate-800 text-[10.5px] font-black px-4 py-2 rounded-xl backdrop-blur-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer border border-slate-100"
+              >
+                <Settings className="w-3.5 h-3.5 text-[#0284c7]" />
+                <span>ویرایش مشخصات پروفایل</span>
+              </button>
+              <span className="pointer-events-auto bg-slate-900/70 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-xs">
+                پروفایل کاربری اختصاصی شما
+              </span>
+            </div>
           )}
         </div>
 
@@ -331,7 +460,7 @@ export default function UserProfile({
                   )}
                   {profileUser.role === "client" && (
                     <span className="bg-blue-50 text-blue-700 border border-blue-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                      عضو فعال انجمن
+                      عضو فعال انجمن زیبایی
                     </span>
                   )}
                 </div>
@@ -364,7 +493,7 @@ export default function UserProfile({
                     className="text-slate-700 focus:outline-none"
                   >
                     {profileUser.acceptingRequests ? (
-                      <ToggleRight className="w-8 h-8 text-[#6B7A4F] shrink-0" />
+                      <ToggleRight className="w-8 h-8 text-[#0284c7] shrink-0" />
                     ) : (
                       <ToggleLeft className="w-8 h-8 text-slate-300 shrink-0" />
                     )}
@@ -379,7 +508,7 @@ export default function UserProfile({
                       className="text-slate-700 focus:outline-none"
                     >
                       {profileUser.openForHiring ? (
-                        <ToggleRight className="w-8 h-8 text-[#6B7A4F] shrink-0" />
+                        <ToggleRight className="w-8 h-8 text-[#0284c7] shrink-0" />
                       ) : (
                         <ToggleLeft className="w-8 h-8 text-slate-300 shrink-0" />
                       )}
@@ -395,7 +524,7 @@ export default function UserProfile({
                       className="text-slate-700 focus:outline-none"
                     >
                       {profileUser.openForHiring ? (
-                        <ToggleRight className="w-8 h-8 text-[#6B7A4F] shrink-0" />
+                        <ToggleRight className="w-8 h-8 text-[#0284c7] shrink-0" />
                       ) : (
                         <ToggleLeft className="w-8 h-8 text-slate-300 shrink-0" />
                       )}
@@ -414,7 +543,7 @@ export default function UserProfile({
           onClick={() => setProfileTab("resume")}
           className={`flex-1 text-center py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             profileTab === "resume"
-              ? "bg-[#6B7A4F] text-white shadow-xs font-extrabold"
+              ? "bg-[#0284c7] text-white shadow-xs font-extrabold"
               : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
           }`}
         >
@@ -425,17 +554,74 @@ export default function UserProfile({
           onClick={() => setProfileTab("posts")}
           className={`flex-1 text-center py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             profileTab === "posts"
-              ? "bg-[#6B7A4F] text-white shadow-xs font-extrabold"
+              ? "bg-[#0284c7] text-white shadow-xs font-extrabold"
               : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
           }`}
         >
           <MessageSquare className="w-4 h-4" />
-          <span>پست‌ها و مطالب منتشر شده در انجمن ({toPersianDigits(profilePosts.length)})</span>
+          <span>پست‌ها و مطالب منتشر شده در انجمن زیبایی ({toPersianDigits(profilePosts.length)})</span>
         </button>
+        {profileUser.role === "manager" && isOwnProfile && (
+          <>
+            {/* Desktop only: Salon Finance Section */}
+            <button
+              id="desktop-finance-tab-btn"
+              onClick={() => setProfileTab("finance")}
+              className={`hidden lg:flex flex-1 text-center py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer items-center justify-center gap-1.5 ${
+                profileTab === "finance"
+                  ? "bg-[#0284c7] text-white shadow-xs font-extrabold"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>بخش مالی سالن (حسابداری)</span>
+            </button>
+            
+            {/* Mobile only: Salon Inbox/Requests section */}
+            <button
+              id="mobile-inbox-tab-btn"
+              onClick={() => setProfileTab("inbox")}
+              className={`lg:hidden flex flex-1 text-center py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer items-center justify-center gap-1.5 ${
+                profileTab === "inbox"
+                  ? "bg-[#0284c7] text-white shadow-xs font-extrabold"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+              }`}
+            >
+              <Inbox className="w-4 h-4" />
+              <span>صندوق</span>
+            </button>
+          </>
+        )}
       </div>
 
+      {profileTab === "finance" && (
+        <FinanceDashboard
+          salonId="salon-1"
+          transactions={transactions}
+          onUpdateTransactions={onUpdateTransactions}
+          allUsers={allUsers}
+        />
+      )}
+
+      {profileTab === "inbox" && (
+        <RequestsInbox
+          currentUser={currentUser}
+          hiringOffers={hiringOffers}
+          onUpdateHiringOffers={onUpdateHiringOffers}
+          clientRequests={clientRequests}
+          onUpdateClientRequests={onUpdateClientRequests}
+          leaveRequests={leaveRequests}
+          onUpdateLeaveRequests={onUpdateLeaveRequests}
+          jobApplications={jobApplications}
+          onUpdateJobApplications={onUpdateJobApplications}
+          allUsers={allUsers}
+          onUpdateUsersList={onUpdateUsersList}
+          onAddDiscountedSlot={onAddDiscountedSlot}
+        />
+      )}
+
       {/* Grid Layout - Details & Profile Strength */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className={`grid lg:grid-cols-3 gap-6 ${(profileTab === "finance" || profileTab === "inbox") ? "hidden" : ""}`}>
         
         {/* RIGHT COLUMN: Profile details, Bio, Skills */}
         <div className="lg:col-span-2 space-y-6">
@@ -448,7 +634,7 @@ export default function UserProfile({
                   {isOwnProfile && (
                     <button
                       onClick={() => setIsEditingBio(!isEditingBio)}
-                      className="text-xs text-[#6B7A4F] hover:underline font-bold"
+                      className="text-xs text-[#0284c7] hover:underline font-bold"
                     >
                       {isEditingBio ? "لغو" : "ویرایش بیو"}
                     </button>
@@ -466,7 +652,7 @@ export default function UserProfile({
                     />
                     <button
                       onClick={handleSaveBio}
-                      className="bg-[#6B7A4F] hover:bg-[#57643F] text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all cursor-pointer"
+                      className="bg-[#0284c7] hover:bg-[#0369a1] text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all cursor-pointer"
                     >
                       ذخیره بیوگرافی
                     </button>
@@ -477,6 +663,71 @@ export default function UserProfile({
                   </p>
                 )}
               </div>
+
+              {/* Contract & Staff Management Section (Visible to Salon Manager viewing an Artist's profile) */}
+              {currentUser.role === "manager" && profileUser.role === "artist" && (
+                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 border-b border-slate-150 pb-2">
+                    <ShieldCheck className="w-5 h-5 text-[#0284c7]" />
+                    <h3 className="text-xs font-black text-slate-800">پنل مدیریت رسمی پرسنلی (ویژه کارفرما)</h3>
+                  </div>
+
+                  {profileUser.contract ? (
+                    <div className="bg-emerald-50/50 border border-emerald-200 p-4 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-emerald-800">وضعیت پرسنلی: استخدام فعال مجموعه</span>
+                        <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full">فعال</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs text-slate-700">
+                        <p><strong>نوع قرارداد:</strong> {profileUser.contract.contractType}</p>
+                        <p><strong>شرایط مالی:</strong> {profileUser.contract.amount}</p>
+                        <p><strong>تضمین ثبت شده:</strong> {profileUser.contract.guaranteeType === "سفته" ? "سفته حسن انجام کار" : "چک معتبر بانکی"}</p>
+                        <p><strong>تاریخ شروع:</strong> {toPersianDigits(profileUser.contract.startDate)}</p>
+                      </div>
+
+                      <div className="border-t border-slate-200/50 pt-3 flex justify-between items-center gap-4">
+                        <p className="text-[10px] text-slate-500 leading-normal">در صورت لغو قرارداد یا عدم پایبندی به شرایط کتبی، می‌توانید همکاری را از این بخش قطع نمایید.</p>
+                        {isTerminatingContract ? (
+                          <div className="flex flex-col gap-2 bg-rose-50 border border-rose-200 p-3 rounded-xl">
+                            <span className="text-[11px] font-black text-rose-800">آیا از قطع همکاری و لغو رسمی قرارداد اطمینان دارید؟</span>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => {
+                                  const updatedUser = { ...profileUser, contract: undefined };
+                                  updateUserAcrossState(updatedUser);
+                                  setIsTerminatingContract(false);
+                                }}
+                                className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black px-3 py-1.5 rounded-lg cursor-pointer"
+                              >
+                                بله، قطع همکاری
+                              </button>
+                              <button
+                                onClick={() => setIsTerminatingContract(false)}
+                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer"
+                              >
+                                انصراف
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setIsTerminatingContract(true)}
+                            className="bg-rose-600 hover:bg-rose-700 text-white text-[10.5px] font-black px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                          >
+                            قطع همکاری و تسویه حساب
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2 text-center">
+                      <p className="text-xs text-slate-500 font-bold">این آرتیست در حال حاضر قرارداد فعالی با سالن شما ندارد.</p>
+                      <p className="text-[10px] text-slate-400">می‌توانید با ارسال پیشنهاد همکاری از بخش استخدام، او را به پیوستن به مجموعه دعوت کنید.</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Technical Radar Chart Matrix for Artists */}
               {profileUser.role === "artist" && (
@@ -543,7 +794,7 @@ export default function UserProfile({
                       </select>
                       <button
                         type="submit"
-                        className="bg-[#6B7A4F] hover:bg-[#57643F] text-white p-2 rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
+                        className="bg-[#0284c7] hover:bg-[#0369a1] text-white p-2 rounded-xl transition-all shadow-sm cursor-pointer shrink-0"
                         title="افزودن تخصص"
                       >
                         <Plus className="w-4 h-4" />
@@ -561,7 +812,7 @@ export default function UserProfile({
                     {isOwnProfile && (
                       <button
                         onClick={() => setShowAddPortfolio(!showAddPortfolio)}
-                        className="text-xs bg-[#6B7A4F] hover:bg-[#57643F] text-white font-bold px-3 py-1 rounded-lg transition-all"
+                        className="text-xs bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-3 py-1 rounded-lg transition-all"
                       >
                         {showAddPortfolio ? "بستن فرم" : "افزودن نمونه‌کار"}
                       </button>
@@ -584,14 +835,26 @@ export default function UserProfile({
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] text-slate-400 font-bold mb-1">آدرس اینترنتی تصویر نمونه‌کار:</label>
-                          <input
-                            type="text"
-                            placeholder="اختیاری - آدرس مستقیم عکس"
-                            value={newPortfolioImg}
-                            onChange={(e) => setNewPortfolioImg(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-700 outline-none focus:border-olive-300"
-                          />
+                          <label className="block text-[10px] text-slate-400 font-bold mb-1">تصویر نمونه‌کار:</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="آدرس عکس یا انتخاب فایل..."
+                              value={newPortfolioImg}
+                              onChange={(e) => setNewPortfolioImg(e.target.value)}
+                              className="flex-1 bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-700 outline-none focus:border-olive-300"
+                            />
+                            <label className="bg-[#0284c7]/10 hover:bg-[#0284c7]/20 text-[#0284c7] text-xs font-bold px-3 py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-all shrink-0">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>فایل</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageBrowse(e, setNewPortfolioImg)}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
                         </div>
                       </div>
                       <div>
@@ -606,7 +869,7 @@ export default function UserProfile({
                       </div>
                       <button
                         type="submit"
-                        className="w-full bg-[#6B7A4F] hover:bg-[#57643F] text-white text-xs font-bold py-2 rounded-xl transition-all cursor-pointer"
+                        className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold py-2 rounded-xl transition-all cursor-pointer"
                       >
                         انتشار در آلبوم
                       </button>
@@ -696,7 +959,7 @@ export default function UserProfile({
                       />
                       <button
                         type="submit"
-                        className="bg-[#6B7A4F] hover:bg-[#57643F] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        className="bg-[#0284c7] hover:bg-[#0369a1] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
                       >
                         ثبت گواهی‌نامه
                       </button>
@@ -757,9 +1020,9 @@ export default function UserProfile({
                       <textarea
                         value={profileNewPostText}
                         onChange={(e) => setProfileNewPostText(e.target.value)}
-                        placeholder="یک مطلب، تجربه یا فرصت شغلی جدید بنویسید که مستقیماً در تالار همگانی انجمن درج شود..."
+                        placeholder="یک مطلب، تجربه یا فرصت شغلی جدید بنویسید که مستقیماً در تالار همگانی انجمن زیبایی درج شود..."
                         rows={3}
-                        className="w-full text-xs text-slate-800 placeholder-slate-400 bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 focus:outline-none focus:border-[#6B7A4F] focus:bg-white transition-all resize-none"
+                        className="w-full text-xs text-slate-800 placeholder-slate-400 bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 focus:outline-none focus:border-[#0284c7] focus:bg-white transition-all resize-none"
                       />
 
                       {profilePostImageUrl && (
@@ -794,17 +1057,28 @@ export default function UserProfile({
                           <button
                             type="button"
                             onClick={() => setProfileShowImageSelector(!profileShowImageSelector)}
-                            className="flex items-center gap-1 text-slate-500 hover:text-[#6B7A4F] hover:bg-slate-50 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all"
+                            className="flex items-center gap-1 text-slate-500 hover:text-[#0284c7] hover:bg-slate-50 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer"
                           >
                             <Image className="w-3.5 h-3.5" />
                             افزودن تصویر پیش‌فرض
                           </button>
+
+                          <label className="flex items-center gap-1 text-slate-500 hover:text-[#0284c7] hover:bg-slate-50 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>بارگذاری تصویر دلخواه</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleImageBrowse(e, setProfilePostImageUrl)}
+                              className="hidden"
+                            />
+                          </label>
                         </div>
 
                         <button
                           type="submit"
                           disabled={!profileNewPostText.trim()}
-                          className="bg-[#6B7A4F] hover:bg-[#57643F] disabled:opacity-50 text-white text-[11px] font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                          className="bg-[#0284c7] hover:bg-[#0369a1] disabled:opacity-50 text-white text-[11px] font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                         >
                           <Send className="w-3.5 h-3.5" />
                           انتشار در تالار گفتگو
@@ -823,7 +1097,7 @@ export default function UserProfile({
                                   setProfilePostImageUrl(url);
                                   setProfileShowImageSelector(false);
                                 }}
-                                className="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-[#6B7A4F] transition-all"
+                                className="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-[#0284c7] transition-all"
                               >
                                 <img src={url} alt={`Preset ${i}`} className="w-full h-full object-cover" />
                               </button>
@@ -871,13 +1145,31 @@ export default function UserProfile({
                               </span>
                             )}
                             {post.authorId === currentUser.id && (
-                              <button
-                                onClick={() => handleProfileDeletePost(post.id)}
-                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
-                                title="حذف این پست"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              postIdToDelete === post.id ? (
+                                <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-100 p-1 px-2 rounded-xl text-[10px]">
+                                  <span className="font-bold text-rose-700">حذف شود؟</span>
+                                  <button
+                                    onClick={() => handleProfileDeletePost(post.id)}
+                                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-0.5 rounded-md cursor-pointer text-[9px]"
+                                  >
+                                    بله
+                                  </button>
+                                  <button
+                                    onClick={() => setPostIdToDelete(null)}
+                                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-0.5 rounded-md cursor-pointer text-[9px]"
+                                  >
+                                    خیر
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setPostIdToDelete(post.id)}
+                                  className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
+                                  title="حذف این پست"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )
                             )}
                           </div>
                         </div>
@@ -952,12 +1244,12 @@ export default function UserProfile({
                                 })
                               }
                               placeholder="نظر کارشناسی یا بازخورد خود را بنویسید..."
-                              className="flex-1 text-xs text-slate-800 placeholder-slate-400 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-[#6B7A4F]"
+                              className="flex-1 text-xs text-slate-800 placeholder-slate-400 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0284c7]"
                             />
                             <button
                               type="submit"
                               disabled={!(profileCommentInputs[post.id] || "").trim()}
-                              className="bg-[#6B7A4F] hover:bg-[#57643F] disabled:opacity-50 text-white px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer"
+                              className="bg-[#0284c7] hover:bg-[#0369a1] disabled:opacity-50 text-white px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer"
                             >
                               ثبت
                             </button>
@@ -976,7 +1268,7 @@ export default function UserProfile({
                       <p className="text-[10px] text-slate-400 font-bold mt-1.5 max-w-sm mx-auto leading-normal">
                         {isOwnProfile
                           ? "شما هنوز هیچ پست یا نمونه‌کاری را در تالار گفتگو به اشتراک نگذاشته‌اید. اولین مطلب خود را بنویسید!"
-                          : "این همکار ارزشمند هنوز هیچ پستی در انجمن ارسال نکرده است."}
+                          : "این همکار ارزشمند هنوز هیچ پستی در انجمن زیبایی ارسال نکرده است."}
                       </p>
                     </div>
                   </div>
@@ -1067,7 +1359,7 @@ export default function UserProfile({
                   <Award className="w-4 h-4 text-slate-400 shrink-0" />
                   <div>
                     <span className="text-slate-400 block text-[9px] font-bold">نام سالن تحت مدیریت:</span>
-                    <span className="font-bold text-[#6B7A4F]">{profileUser.salonName}</span>
+                    <span className="font-bold text-[#0284c7]">{profileUser.salonName}</span>
                     {profileUser.salonLocation && (
                       <p className="text-[10px] text-slate-500 font-normal mt-1 leading-normal">{profileUser.salonLocation}</p>
                     )}
@@ -1080,6 +1372,286 @@ export default function UserProfile({
         </div>
 
       </div>
+
+      {/* Full Edit Profile Modal */}
+      {isEditingProfile && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col">
+            
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-3xl shrink-0">
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-[#0284c7]" />
+                <h3 className="text-sm font-black text-slate-800">ویرایش مشخصات و اطلاعات کاربری</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingProfile(false)}
+                className="text-slate-400 hover:text-slate-700 font-extrabold text-lg focus:outline-none cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveProfile} className="p-6 space-y-6 overflow-y-auto">
+              
+              {/* Profile Image & Cover Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">تصویر پروفایل و کاور</h4>
+                
+                {/* Avatar choice */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={editAvatar}
+                      alt="Avatar Preview"
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-[#0284c7] shadow-sm shrink-0"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <label className="block text-[11px] text-slate-500 font-bold">تصویر پروفایل:</label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={editAvatar}
+                          onChange={(e) => setEditAvatar(e.target.value)}
+                          className="flex-1 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#0284c7]"
+                          placeholder="آدرس اینترنتی عکس یا انتخاب از دستگاه..."
+                        />
+                        <label className="bg-[#0284c7]/10 hover:bg-[#0284c7]/20 text-[#0284c7] text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 transition-all shrink-0">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>انتخاب فایل</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageBrowse(e, setEditAvatar)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preset Avatars Grid */}
+                  <div>
+                    <span className="block text-[10px] text-slate-400 font-bold mb-2">انتخاب سریع از آلبوم آواتارهای حرفه‌ای ممیزی شده:</span>
+                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                      {PRESET_AVATARS.map((url, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setEditAvatar(url)}
+                          className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                            editAvatar === url ? "border-[#0284c7] scale-105 shadow-xs" : "border-transparent hover:border-slate-300"
+                          }`}
+                        >
+                          <img src={url} alt={`Preset Avatar ${i}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cover choice */}
+                <div className="space-y-3 pt-3">
+                  <div className="flex flex-col gap-2">
+                    <div className="w-full h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative">
+                      <img
+                        src={editCover || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1200&auto=format&fit=crop"}
+                        alt="Cover Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute bottom-2 right-2 bg-slate-900/60 text-white text-[9px] font-bold px-2 py-1 rounded">پیش‌نمایش هدر</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] text-slate-500 font-bold">تصویر پس‌زمینه هدر (کاور):</label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={editCover}
+                          onChange={(e) => setEditCover(e.target.value)}
+                          className="flex-1 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#0284c7]"
+                          placeholder="آدرس اینترنتی عکس یا انتخاب از دستگاه..."
+                        />
+                        <label className="bg-[#0284c7]/10 hover:bg-[#0284c7]/20 text-[#0284c7] text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 transition-all shrink-0">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>انتخاب فایل</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageBrowse(e, setEditCover)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preset Covers Grid */}
+                  <div>
+                    <span className="block text-[10px] text-slate-400 font-bold mb-2">انتخاب سریع از تصاویر پس‌زمینه سالن:</span>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                      {PRESET_COVERS.map((url, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setEditCover(url)}
+                          className={`aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+                            editCover === url ? "border-[#0284c7] scale-105 shadow-xs" : "border-transparent hover:border-slate-300"
+                          }`}
+                        >
+                          <img src={url} alt={`Preset Cover ${i}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Personal details */}
+              <div className="space-y-4 pt-2">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">مشخصات عمومی و تماس</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] text-slate-500 font-bold mb-1.5">نام و نام خانوادگی:</label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7] font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-slate-500 font-bold mb-1.5">عنوان تخصص و لاین اصلی:</label>
+                    <input
+                      type="text"
+                      required
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7] font-bold"
+                      placeholder="مثال: متخصص لاین ناخن یا میکاپ آرتیست ارشد"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-slate-500 font-bold mb-1.5">شماره همراه تماس:</label>
+                    <input
+                      type="text"
+                      required
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7] font-mono font-bold"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-slate-500 font-bold mb-1.5">پست الکترونیکی (ایمیل):</label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7]"
+                      placeholder="نمونه: info@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-slate-500 font-bold mb-1.5">شهر محل سکونت / فعالیت:</label>
+                    <input
+                      type="text"
+                      required
+                      value={editCity}
+                      onChange={(e) => setEditCity(e.target.value)}
+                      className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7]"
+                    />
+                  </div>
+
+                  {profileUser.role !== "client" && (
+                    <div>
+                      <label className="block text-[11px] text-slate-500 font-bold mb-1.5">سابقه کار مفید (سال):</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={editExp}
+                        onChange={(e) => setEditExp(Number(e.target.value))}
+                        className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7] font-bold"
+                      />
+                    </div>
+                  )}
+
+                </div>
+              </div>
+
+              {/* Salon Details for Manager role */}
+              {profileUser.role === "manager" && (
+                <div className="space-y-4 pt-2">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">مشخصات سالن زیبایی تحت مدیریت</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] text-slate-500 font-bold mb-1.5">نام سالن زیبایی:</label>
+                      <input
+                        type="text"
+                        value={editSalonName}
+                        onChange={(e) => setEditSalonName(e.target.value)}
+                        className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7] font-bold"
+                        placeholder="مثال: سالن زیبایی لاوین"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] text-slate-500 font-bold mb-1.5">آدرس دقیق یا موقعیت سالن:</label>
+                      <input
+                        type="text"
+                        value={editSalonLocation}
+                        onChange={(e) => setEditSalonLocation(e.target.value)}
+                        className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#0284c7]"
+                        placeholder="مثال: تهران، خیابان فرشته، پلاک ۱۲"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-slate-500 font-bold mb-1.5">توضیحات کوتاه یا معرفی خدمات سالن:</label>
+                    <textarea
+                      value={editSalonDesc}
+                      onChange={(e) => setEditSalonDesc(e.target.value)}
+                      rows={3}
+                      className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:border-[#0284c7] resize-none"
+                      placeholder="لاین‌ها و خدمات اصلی سالن را به صورت خلاصه بنویسید..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingProfile(false)}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-5 py-3 rounded-xl transition-all cursor-pointer"
+                >
+                  انصراف و بستن
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-extrabold px-6 py-3 rounded-xl transition-all shadow-md cursor-pointer"
+                >
+                  ذخیره تغییرات پروفایل
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

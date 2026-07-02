@@ -6,12 +6,15 @@ import {
   addDoc, 
   updateDoc, 
   doc, 
+  getDoc,
   query, 
+  where,
   orderBy, 
   setDoc,
   deleteDoc
 } from "firebase/firestore";
 import firebaseConfig from "../../firebase-applet-config.json";
+import { Transaction, StaffContract, LeaveRequest } from "../types";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -154,5 +157,113 @@ export async function updateBookingRatingInDb(id: string, rating: number): Promi
     await updateDoc(docRef, { rating });
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+}
+
+// Collections
+const TRANSACTIONS_COLLECTION = "transactions";
+const CONTRACTS_COLLECTION = "contracts";
+const LEAVE_REQUESTS_COLLECTION = "leave_requests";
+
+// Transaction Reads/Writes
+export async function saveTransactionToDb(transaction: Omit<Transaction, "id">): Promise<string> {
+  try {
+    const cleanData = cleanUndefined(transaction);
+    const docRef = await addDoc(collection(db, TRANSACTIONS_COLLECTION), cleanData);
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, TRANSACTIONS_COLLECTION);
+    throw error;
+  }
+}
+
+export async function fetchTransactionsFromDb(salonId?: string): Promise<Transaction[]> {
+  try {
+    let q = query(collection(db, TRANSACTIONS_COLLECTION));
+    if (salonId) {
+      q = query(collection(db, TRANSACTIONS_COLLECTION), where("salonId", "==", salonId));
+    }
+    const querySnapshot = await getDocs(q);
+    const list: Transaction[] = [];
+    querySnapshot.forEach((doc) => {
+      list.push({
+        id: doc.id,
+        ...doc.data()
+      } as Transaction);
+    });
+    return list;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, TRANSACTIONS_COLLECTION);
+    throw error;
+  }
+}
+
+// Contract Reads/Writes
+export async function saveContractToDb(userId: string, contract: StaffContract): Promise<void> {
+  const path = `${CONTRACTS_COLLECTION}/${userId}`;
+  try {
+    const cleanData = cleanUndefined(contract);
+    await setDoc(doc(db, CONTRACTS_COLLECTION, userId), cleanData);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    throw error;
+  }
+}
+
+export async function fetchContractFromDb(userId: string): Promise<StaffContract | null> {
+  const path = `${CONTRACTS_COLLECTION}/${userId}`;
+  try {
+    const docSnap = await getDoc(doc(db, CONTRACTS_COLLECTION, userId));
+    if (docSnap.exists()) {
+      return docSnap.data() as StaffContract;
+    }
+    return null;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, path);
+    throw error;
+  }
+}
+
+// Leave Request Reads/Writes
+export async function saveLeaveRequestToDb(leaveReq: Omit<LeaveRequest, "id">): Promise<string> {
+  try {
+    const cleanData = cleanUndefined(leaveReq);
+    const docRef = await addDoc(collection(db, LEAVE_REQUESTS_COLLECTION), cleanData);
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, LEAVE_REQUESTS_COLLECTION);
+    throw error;
+  }
+}
+
+export async function fetchLeaveRequestsFromDb(staffId?: string): Promise<LeaveRequest[]> {
+  try {
+    let q = query(collection(db, LEAVE_REQUESTS_COLLECTION));
+    if (staffId) {
+      q = query(collection(db, LEAVE_REQUESTS_COLLECTION), where("staffId", "==", staffId));
+    }
+    const querySnapshot = await getDocs(q);
+    const list: LeaveRequest[] = [];
+    querySnapshot.forEach((doc) => {
+      list.push({
+        id: doc.id,
+        ...doc.data()
+      } as LeaveRequest);
+    });
+    return list;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, LEAVE_REQUESTS_COLLECTION);
+    throw error;
+  }
+}
+
+export async function updateLeaveStatusInDb(id: string, status: LeaveRequest["status"]): Promise<void> {
+  const path = `${LEAVE_REQUESTS_COLLECTION}/${id}`;
+  try {
+    const docRef = doc(db, LEAVE_REQUESTS_COLLECTION, id);
+    await updateDoc(docRef, { status });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+    throw error;
   }
 }

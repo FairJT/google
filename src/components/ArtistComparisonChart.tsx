@@ -220,9 +220,9 @@ export default function ArtistComparisonChart({
           {/* Radar area Artist A (Emerald / Olive theme to match brand) */}
           <polygon
             points={pathA}
-            fill="#6B7A4F"
+            fill="#0284c7"
             fillOpacity={0.25}
-            stroke="#6B7A4F"
+            stroke="#0284c7"
             strokeWidth="2.5"
             strokeLinejoin="round"
             className="transition-all duration-300 hover:fill-opacity-40"
@@ -250,7 +250,7 @@ export default function ArtistComparisonChart({
                   cx={nodeA.x}
                   cy={nodeA.y}
                   r="4"
-                  fill="#6B7A4F"
+                  fill="#0284c7"
                   stroke="#ffffff"
                   strokeWidth="1.5"
                   className="cursor-pointer"
@@ -308,9 +308,9 @@ export default function ArtistComparisonChart({
                   textAnchor={textAnchor}
                   className="text-[9px] font-bold"
                 >
-                  <tspan fill="#6B7A4F">{m.displayValueA}</tspan>
-                  <tspan fill="#64748b" mx-1> | </tspan>
-                  <tspan fill="#0f172a">{m.displayValueB}</tspan>
+                  <tspan fill="#0284c7">{m.displayValueA}</tspan>
+                  <tspan fill="#64748b" dx="6"> | </tspan>
+                  <tspan fill="#0f172a" dx="6">{m.displayValueB}</tspan>
                 </text>
               </g>
             );
@@ -321,7 +321,7 @@ export default function ArtistComparisonChart({
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 mt-2 border-t border-slate-150 pt-2.5 w-full max-w-sm">
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-full bg-[#6B7A4F] inline-block" />
+          <span className="w-3.5 h-3.5 rounded-full bg-[#0284c7] inline-block" />
           <span className="text-[11px] font-bold text-slate-800">{artistA.name}</span>
         </div>
         <div className="flex items-center gap-1.5">

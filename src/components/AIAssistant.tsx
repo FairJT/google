@@ -22,6 +22,7 @@ interface AIAssistantProps {
   currentUser: User;
   allUsers: User[];
   clientRequests: ClientRequest[];
+  transactions?: any[];
 }
 
 interface ChatMessage {
@@ -31,10 +32,11 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-export default function AIAssistant({ currentUser, allUsers, clientRequests }: AIAssistantProps) {
+export default function AIAssistant({ currentUser, allUsers, clientRequests, transactions = [] }: AIAssistantProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isManager = currentUser.role === "manager";
@@ -109,7 +111,8 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
           role: currentUser.role,
           userName: currentUser.name,
           allUsers,
-          clientRequests
+          clientRequests,
+          transactions
         })
       });
 
@@ -145,15 +148,14 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
   };
 
   const handleClearChat = () => {
-    if (window.confirm("آیا می‌خواهید تاریخچه گفتگو با دستیار هوشمند پاک شود؟")) {
-      setMessages([]);
-    }
+    setMessages([]);
+    setIsConfirmingClear(false);
   };
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-xs flex flex-col h-[70vh] md:h-[75vh] text-right font-sans" dir="rtl">
       {/* Header Banner */}
-      <div className="bg-gradient-to-l from-[#6B7A4F] to-[#57643F] p-4.5 text-white flex items-center justify-between shadow-sm shrink-0">
+      <div className="bg-gradient-to-l from-[#0284c7] to-[#0369a1] p-4.5 text-white flex items-center justify-between shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white ring-2 ring-white/10 shadow-inner">
             {isManager ? <TrendingUp className="w-5 h-5 animate-pulse" /> : <Sparkles className="w-5 h-5 animate-pulse" />}
@@ -171,14 +173,34 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
         </div>
 
         {messages.length > 1 && (
-          <button
-            type="button"
-            onClick={handleClearChat}
-            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 hover:text-white rounded-xl transition-all cursor-pointer"
-            title="پاک کردن گفتگو"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          isConfirmingClear ? (
+            <div className="flex items-center gap-1.5 bg-white/10 p-1 px-2 rounded-xl text-[10px] text-white">
+              <span className="font-bold">پاک شود؟</span>
+              <button
+                type="button"
+                onClick={handleClearChat}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-0.5 rounded-md cursor-pointer text-[9px]"
+              >
+                بله
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsConfirmingClear(false)}
+                className="bg-white/20 hover:bg-white/30 text-white font-bold px-2 py-0.5 rounded-md cursor-pointer text-[9px]"
+              >
+                خیر
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsConfirmingClear(true)}
+              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 hover:text-white rounded-xl transition-all cursor-pointer"
+              title="پاک کردن گفتگو"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )
         )}
       </div>
 
@@ -194,7 +216,7 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
               {/* Avatar Icon */}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-2xs ${
                 isUser 
-                  ? "bg-[#6B7A4F] text-white" 
+                  ? "bg-[#0284c7] text-white" 
                   : isManager 
                   ? "bg-amber-100 text-amber-700 border border-amber-200" 
                   : "bg-emerald-100 text-emerald-700 border border-emerald-200"
@@ -211,7 +233,7 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
               {/* Message Content Bubble */}
               <div className={`rounded-2xl px-4 py-3 text-right text-xs leading-relaxed ${
                 isUser 
-                  ? "bg-[#6B7A4F] text-white rounded-tl-none shadow-xs" 
+                  ? "bg-[#0284c7] text-white rounded-tl-none shadow-xs" 
                   : "bg-white text-slate-800 border border-slate-150/80 rounded-tr-none shadow-2xs"
               }`}>
                 {isUser ? (
@@ -255,7 +277,7 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
       {messages.length <= 2 && (
         <div className="px-4.5 py-3 border-t border-slate-100 bg-slate-50/30 shrink-0">
           <p className="text-[9.5px] text-slate-400 font-black mb-2 flex items-center gap-1">
-            <Compass className="w-3.5 h-3.5 text-[#6B7A4F]" /> سوالات پیشنهادی و سریع:
+            <Compass className="w-3.5 h-3.5 text-[#0284c7]" /> سوالات پیشنهادی و سریع:
           </p>
           <div className="flex flex-wrap gap-1.5">
             {currentSuggestions.map((item, idx) => (
@@ -286,7 +308,7 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
           disabled={!input.trim() || isLoading}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
             input.trim() && !isLoading
-              ? "bg-[#6B7A4F] hover:bg-[#57643F] text-white cursor-pointer active:scale-95"
+              ? "bg-[#0284c7] hover:bg-[#0369a1] text-white cursor-pointer active:scale-95"
               : "bg-slate-100 text-slate-400 cursor-not-allowed"
           }`}
         >
@@ -298,7 +320,7 @@ export default function AIAssistant({ currentUser, allUsers, clientRequests }: A
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={isManager ? "از من بپرسید... مثلا: گزارش درآمد نوبت‌های تایید شده" : "سوالی داری؟ مثلا: مدل کاشت ناخن تا رنج قیمت ۲ میلیون تومن..."}
-          className="flex-1 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-[#6B7A4F] rounded-xl px-4 py-3 text-right outline-none transition-all font-semibold"
+          className="flex-1 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-[#0284c7] rounded-xl px-4 py-3 text-right outline-none transition-all font-semibold"
           disabled={isLoading}
         />
       </form>

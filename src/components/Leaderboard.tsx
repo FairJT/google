@@ -69,14 +69,14 @@ export default function Leaderboard({ allUsers, onSelectArtist, onChangeTab }: L
       {/* Intro Header */}
       <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <Award className="w-5 h-5 text-[#6B7A4F]" />
+          <Award className="w-5 h-5 text-[#0284c7]" />
           <div>
             <h2 className="text-base font-bold text-slate-950">باشگاه نخبگان زیبایی و تالار مشاهیر</h2>
             <p className="text-[11px] text-slate-500">جایگاه هنرمندان ممیزی‌شده با بیشترین میزان رضایت مشتری و تکمیل رزومه کاری.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-[#6B7A4F]/10 text-[#6B7A4F] px-3.5 py-1.5 rounded-xl text-xs font-bold self-start md:self-auto">
+        <div className="flex items-center gap-1.5 bg-[#0284c7]/10 text-[#0284c7] px-3.5 py-1.5 rounded-xl text-xs font-bold self-start md:self-auto">
           <TrendingUp className="w-4 h-4" />
           بروزرسانی هفتگی بر اساس پایش رضایت
         </div>
@@ -170,7 +170,7 @@ export default function Leaderboard({ allUsers, onSelectArtist, onChangeTab }: L
                       onSelectArtist(artist);
                       onChangeTab("profile");
                     }}
-                    className="bg-slate-100 hover:bg-[#6B7A4F] hover:text-white text-slate-600 p-2 rounded-xl transition-all duration-300 flex items-center justify-center shrink-0"
+                    className="bg-slate-100 hover:bg-[#0284c7] hover:text-white text-slate-600 p-2 rounded-xl transition-all duration-300 flex items-center justify-center shrink-0"
                     title="مشاهده مشخصات و آلبوم نمونه‌کار"
                   >
                     <ArrowUpRight className="w-4 h-4" />

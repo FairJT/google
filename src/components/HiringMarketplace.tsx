@@ -194,7 +194,7 @@ export default function HiringMarketplace({
             onClick={() => setActiveTab("list")}
             className={`text-center px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "list"
-                ? "bg-[#6B7A4F] text-white shadow-xs font-extrabold"
+                ? "bg-[#0284c7] text-white shadow-xs font-extrabold"
                 : "text-slate-500 hover:text-slate-800 hover:bg-white"
             }`}
           >
@@ -204,7 +204,7 @@ export default function HiringMarketplace({
             onClick={() => setActiveTab("compare")}
             className={`text-center px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === "compare"
-                ? "bg-[#6B7A4F] text-white shadow-xs font-extrabold"
+                ? "bg-[#0284c7] text-white shadow-xs font-extrabold"
                 : "text-slate-500 hover:text-slate-800 hover:bg-white"
             }`}
           >
@@ -228,7 +228,7 @@ export default function HiringMarketplace({
           {/* Search Header */}
           <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2.5">
-          <Sparkles className="w-5 h-5 text-[#6B7A4F]" />
+          <Sparkles className="w-5 h-5 text-[#0284c7]" />
           <div>
             <h2 className="text-base font-bold text-slate-950">بازار کار و مأموریت استخدامی کشور</h2>
             <p className="text-[11px] text-slate-500">پروفایل‌های ممیزی شده پرسنل را مرور کنید، قدرت رزومه‌ها را ببینید و استخدام هوشمند را آغاز کنید.</p>
@@ -284,7 +284,7 @@ export default function HiringMarketplace({
               type="checkbox"
               checked={onlyAvailableForHiring}
               onChange={(e) => setOnlyAvailableForHiring(e.target.checked)}
-              className="w-4 h-4 rounded accent-[#6B7A4F]"
+              className="w-4 h-4 rounded accent-[#0284c7]"
             />
             <span className="text-xs text-slate-600 font-bold">فقط افراد آماده به کار (Open for Hiring)</span>
           </label>
@@ -293,8 +293,8 @@ export default function HiringMarketplace({
 
       {/* Salons Open for Hiring Quick Banner */}
       {openSalons.length > 0 && (
-        <div className="bg-[#FAF8F4] border border-[#6B7A4F]/20 rounded-2xl p-4.5">
-          <h3 className="text-xs font-bold text-[#6B7A4F] flex items-center gap-1.5 mb-3">
+        <div className="bg-[#FAF8F4] border border-[#0284c7]/20 rounded-2xl p-4.5">
+          <h3 className="text-xs font-bold text-[#0284c7] flex items-center gap-1.5 mb-3">
             <Award className="w-4 h-4" />
             سالن‌های فعال در جذب نیرو (در حال استخدام):
           </h3>
@@ -310,7 +310,7 @@ export default function HiringMarketplace({
                 {currentUser.role === "client" && salon.acceptingRequests && (
                   <button
                     onClick={() => setSelectedTargetForClientRequest(salon)}
-                    className="bg-[#6B7A4F] hover:bg-[#57643F] text-white text-[9px] font-bold px-2.5 py-1.5 rounded-lg transition-all"
+                    className="bg-[#0284c7] hover:bg-[#0369a1] text-white text-[9px] font-bold px-2.5 py-1.5 rounded-lg transition-all"
                   >
                     رزرو نوبت
                   </button>
@@ -330,7 +330,7 @@ export default function HiringMarketplace({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-slate-950 flex items-center gap-1.5">
           <span>لیست هنرمندان بر اساس امتیاز و قدرت رزومه</span>
-          <span className="bg-[#6B7A4F]/10 text-[#6B7A4F] text-xs px-2.5 py-0.5 rounded-full font-bold">
+          <span className="bg-[#0284c7]/10 text-[#0284c7] text-xs px-2.5 py-0.5 rounded-full font-bold">
             {toPersianDigits(rankedArtists.length)} مورد
           </span>
         </h3>
@@ -365,7 +365,7 @@ export default function HiringMarketplace({
                     />
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#6B7A4F] transition-all">{artist.name}</h4>
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#0284c7] transition-all">{artist.name}</h4>
                         {artist.openForHiring ? (
                           <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[8px] font-bold px-2 py-0.5 rounded-full">
                             آماده به کار
@@ -456,7 +456,7 @@ export default function HiringMarketplace({
                     {currentUser.role === "client" && artist.acceptingRequests && (
                       <button
                         onClick={() => setSelectedTargetForClientRequest(artist)}
-                        className="bg-[#6B7A4F] hover:bg-[#57643F] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer"
+                        className="bg-[#0284c7] hover:bg-[#0369a1] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer"
                       >
                         ارسال درخواست نوبت
                       </button>
@@ -476,7 +476,7 @@ export default function HiringMarketplace({
                           }}
                           className="bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 transition-all cursor-pointer flex items-center gap-1"
                         >
-                          <Scale className="w-3.5 h-3.5 text-[#6B7A4F]" />
+                          <Scale className="w-3.5 h-3.5 text-[#0284c7]" />
                           مقایسه آرتیست
                         </button>
                         
@@ -549,7 +549,7 @@ export default function HiringMarketplace({
               <div className="flex gap-2.5 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-[#6B7A4F] hover:bg-[#57643F] text-white text-xs font-bold py-2 rounded-xl transition-all cursor-pointer"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold py-2 rounded-xl transition-all cursor-pointer"
                 >
                   ارسال آگهی و پیشنهاد
                 </button>
@@ -581,7 +581,7 @@ export default function HiringMarketplace({
               <div className="space-y-0.5">
                 <h3 className="text-sm font-black text-slate-900">رزرو نوبت خدمات زیبایی</h3>
                 <p className="text-[11px] text-slate-500">
-                  در حال ثبت درخواست نوبت برای <strong className="text-[#6B7A4F]">{selectedTargetForClientRequest.role === "manager" ? (selectedTargetForClientRequest.salonName || selectedTargetForClientRequest.name) : selectedTargetForClientRequest.name}</strong> ({selectedTargetForClientRequest.title})
+                  در حال ثبت درخواست نوبت برای <strong className="text-[#0284c7]">{selectedTargetForClientRequest.role === "manager" ? (selectedTargetForClientRequest.salonName || selectedTargetForClientRequest.name) : selectedTargetForClientRequest.name}</strong> ({selectedTargetForClientRequest.title})
                 </p>
               </div>
             </div>
@@ -610,7 +610,7 @@ export default function HiringMarketplace({
                         <span>توجه: روز انتخابی شما آخر هفته (پنج‌شنبه یا جمعه) است. تایید نهایی نوبت منوط به پذیرش آرتیست زیبایی خواهد بود.</span>
                       </div>
                     ) : (
-                      <div className="bg-[#6B7A4F]/5 text-[#6B7A4F] border border-[#6B7A4F]/15 text-[10px] font-bold p-3 rounded-xl leading-relaxed flex items-start gap-1.5">
+                      <div className="bg-[#0284c7]/5 text-[#0284c7] border border-[#0284c7]/15 text-[10px] font-bold p-3 rounded-xl leading-relaxed flex items-start gap-1.5">
                         <span>📅</span>
                         <span>نوبت شما برای روز غیرتعطیل ثبت می‌شود. شانس پذیرش سریع‌تر درخواست بیشتر است.</span>
                       </div>
@@ -631,7 +631,7 @@ export default function HiringMarketplace({
                         placeholder="مثال: لایت عسلی، کاشت مژه، میکاپ ویژه"
                         value={serviceType}
                         onChange={(e) => setServiceType(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-[#6B7A4F] focus:border-[#6B7A4F] transition-all font-bold"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-[#0284c7] focus:border-[#0284c7] transition-all font-bold"
                       />
                     </div>
 
@@ -645,7 +645,7 @@ export default function HiringMarketplace({
                               key={idx}
                               type="button"
                               onClick={() => setServiceType(skill.name)}
-                              className="text-[9.5px] bg-white hover:bg-[#6B7A4F] hover:text-white border border-slate-200 text-slate-600 font-bold px-2 py-1 rounded-lg transition-all cursor-pointer shadow-2xs"
+                              className="text-[9.5px] bg-white hover:bg-[#0284c7] hover:text-white border border-slate-200 text-slate-600 font-bold px-2 py-1 rounded-lg transition-all cursor-pointer shadow-2xs"
                             >
                               {skill.name}
                             </button>
@@ -680,8 +680,8 @@ export default function HiringMarketplace({
                               isSlotBooked
                                 ? "bg-rose-50 text-rose-400 border border-rose-100/70 cursor-not-allowed opacity-60 line-through"
                                 : isSelected
-                                ? "bg-[#6B7A4F] text-white shadow-md shadow-[#6B7A4F]/20 border border-[#6B7A4F]"
-                                : "bg-white border border-slate-200 text-slate-700 hover:border-[#6B7A4F] hover:bg-[#6B7A4F]/5"
+                                ? "bg-[#0284c7] text-white shadow-md shadow-[#0284c7]/20 border border-[#0284c7]"
+                                : "bg-white border border-slate-200 text-slate-700 hover:border-[#0284c7] hover:bg-[#0284c7]/5"
                             }`}
                           >
                             <span>{toPersianDigits(slot)}</span>
@@ -700,7 +700,7 @@ export default function HiringMarketplace({
                       value={requestNote}
                       onChange={(e) => setRequestNote(e.target.value)}
                       rows={2}
-                      className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-[#6B7A4F] focus:border-[#6B7A4F] transition-all resize-none font-medium"
+                      className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-[#0284c7] focus:border-[#0284c7] transition-all resize-none font-medium"
                     />
                   </div>
 
@@ -712,7 +712,7 @@ export default function HiringMarketplace({
               <div className="flex gap-3 border-t border-slate-100 pt-4 mt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-[#6B7A4F] hover:bg-[#57643F] text-white text-xs font-black py-3 rounded-xl shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-black py-3 rounded-xl shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>ثبت نهایی درخواست نوبت</span>

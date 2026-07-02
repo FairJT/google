@@ -34,7 +34,7 @@ app.use(express.json());
 // 1. Chat Endpoint with Role-Based Personas (Manager operational assistant & Client style consultant)
 app.post("/api/chat", async (req, res) => {
   try {
-    const { messages, role, userName, allUsers, clientRequests } = req.body;
+    const { messages, role, userName, allUsers, clientRequests, transactions } = req.body;
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: "Invalid messages format" });
       return;
@@ -66,6 +66,14 @@ app.post("/api/chat", async (req, res) => {
       }).join("\n");
     }
 
+    // Format transactions
+    let transactionsSummary = "";
+    if (transactions && Array.isArray(transactions)) {
+      transactionsSummary = transactions.map((t: any) => {
+        return `- تاریخ: ${t.date} | دسته‌بندی: ${t.category} | مبلغ: ${t.amount} تومان | توضیحات: ${t.description || "بدون توضیح"}`;
+      }).join("\n");
+    }
+
     // Dynamic system persona prompt based on the user's role
     let personaPrompt = "";
     const nameToUse = userName || "کاربر عزیز";
@@ -76,10 +84,10 @@ Your traits: highly professional, data-driven, strategic, warm, and extremely or
 Your language: STRICTLY Persian (Farsi) only. Speak in a respectful, sophisticated, and business-focused tone (احترام تجاری و صمیمیت فارسی).
 
 Your task is to help the Salon Manager (named ${nameToUse}) manage their beauty business:
-1. Provide Financial Analysis & Reports: Since there is no explicit price in bookings, assume standard premium market prices for services (e.g. Hair Balayage: 2,500,000 Toman, Nail Extensions/Designs: 800,000 Toman, Bridal Makeup: 5,000,000 Toman, Haircut: 400,000 Toman, Facial/Skincare: 1,200,000 Toman). Calculate simulated metrics like:
-   - Total Potential Revenue (accepted + pending bookings)
-   - Realized Revenue (from accepted bookings only)
-   - Highlight top-performing services or artists by booking volume.
+1. Provide Financial Analysis & Reports: You have access to real transaction logs from the financial ledger. Analyze these transactions (including categories like rental income, bills, salaries, supplies) and bookings:
+   - Provide summary of total revenues vs total expenses.
+   - Calculate net profit based on these actual ledger items.
+   - Highlight any budget concerns or categories with high spending.
 2. Check Artist Status & Performance: Look at the active artists listed in the database, their average ratings, skills, and workload (number of accepted bookings in clientRequests). Recommend top artists or suggest hiring new talent if current artists have high workload.
 3. Help with Salon Management, scheduling tips, marketing advice, and conflict resolution with clients or staff.
 
@@ -88,7 +96,10 @@ Here is the real-time Salon & Artist data available in the system:
 ${artistsSummary || "هیچ آرتیستی در سیستم یافت نشد."}
 
 --- ACTIVE CLIENT BOOKINGS & REQUESTS ---
-${requestsSummary || "هیچ رزرو نوبتی ثبت نشده است."}`;
+${requestsSummary || "هیچ رزرو نوبتی ثبت نشده است."}
+
+--- REAL TRANSACTION LOGS (FINANCIAL LEDGER) ---
+${transactionsSummary || "هیچ تراکنش مالی ثبت نشده است."}`;
     } else {
       personaPrompt = `You are "Legendin Beauty Expert" (دستیار زیبایی و مشاوره هوشمند لجندین) - an elite AI Style Consultant and beauty shopping assistant.
 Your traits: fashionable, extremely warm, helpful, beauty-enthusiast, and elegant.
